@@ -41,6 +41,8 @@ export interface UserPreferences {
      * Show debugging menus to help diagnose issues
      */
     showDebugMenus: boolean
+
+    useLexical: boolean
 }
 
 export interface LoginStore {
@@ -117,7 +119,8 @@ const InitState = {
         theme: "system",
         confirmReposts: false,
         showDebugMenus: false,
-        autoShowLatest: false
+        autoShowLatest: false,
+        useLexical: true,
     }
 } as LoginStore;
 

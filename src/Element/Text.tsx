@@ -1,8 +1,9 @@
 import './Text.css'
 import { useMemo, useCallback } from "react";
+import { visit, SKIP } from "unist-util-visit";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { visit, SKIP } from "unist-util-visit";
+
 import { TwitterTweetEmbed } from "react-twitter-embed";
 
 import { UrlRegex, FileExtensionRegex, MentionRegex, InvoiceRegex, YoutubeUrlRegex, TweetUrlRegex, HashtagRegex, TidalRegex, SoundCloudRegex, MixCloudRegex } from "Const";
@@ -20,6 +21,7 @@ import { UserPreferences } from 'State/Login';
 import  SoundCloudEmbed from 'Element/SoundCloudEmded'
 import MixCloudEmbed from './MixCloudEmbed';
 import PreviewMenu from './PreviewMenu';
+import Editor from './Lexical';
 
 function transformHttpLink(a: string, pref: UserPreferences) {
     try {
@@ -213,9 +215,9 @@ export default function Text({ content, tags, users }: TextProps) {
     const pref = useSelector<RootState, UserPreferences>(s => s.login.preferences);
     const components = useMemo(() => {
         return {
-            // p: (x: any) => transformParagraph({ body: x.children ?? [], tags, users }),
-            // a: (x: any) => transformHttpLink(x.href),
-            // li: (x: any) => transformLi({ body: x.children ?? [], tags, users }),
+            p: (x: any) => transformParagraph({ body: x.children ?? [], tags, users, pref }),
+            a: (x: any) => transformHttpLink(x.href, pref),
+            li: (x: any) => transformLi({ body: x.children ?? [], tags, users, pref }),
         };
     }, [content]);
     const disableMarkdownLinks = useCallback(() => (tree: any) => {
@@ -240,89 +242,5 @@ export default function Text({ content, tags, users }: TextProps) {
         components={components}
         remarkPlugins={[disableMarkdownLinks]}
     >{content}</ReactMarkdown>
-    return <Editor className="text" editable={false} content={content} />
-    // return <ReactMarkdown className="text" components={components}>{content}</ReactMarkdown>
 }
-
-
-
   
-  // Catch any errors that occur during Lexical updates and log them
-  // or throw them as needed. If you don't throw them, Lexical will
-  // try to recover gracefully without losing user data.
-  function onError(error: Error) {
-    console.error(error);
-  }
-
-  interface EditorProps {
-    children?: ReactNode
-    editable?: boolean;
-    className?: string
-    content: string
-  }
-  
-  function Editor(props: EditorProps) {
-    const theme = {
-    } 
-
-    const initialConfig = {
-      namespace: 'MyEditor',
-      theme,
-      onError,
-      nodes: [HeadingNode, ListNode, ListItemNode, LinkNode, AutoLinkNode, HashtagNode],
-      editable: props.editable,
-      editorState: () => $convertFromMarkdownString(props.content, [
-        INLINE_CODE,
-        BOLD_ITALIC_STAR,
-        BOLD_ITALIC_UNDERSCORE,
-        BOLD_STAR,
-        BOLD_UNDERSCORE,
-        STRIKETHROUGH,
-        ITALIC_STAR,
-        ITALIC_UNDERSCORE,
-        LINK,
-        ORDERED_LIST,
-        QUOTE,
-        CHECK_LIST,
-        CODE,
-        HEADING,
-      ])
-    };
-
-    // const CUSTOM_TRANSFORM = [
-    //     (text:string) => {
-    //     }
-    // ]
-
-    const URL_MATCHER =
-        /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
-
-        const MATCHERS = [
-        (text:string) => {
-            const match = URL_MATCHER.exec(text);
-            if (match === null) {
-            return null;
-            }
-            const fullMatch = match[0];
-            return {
-            index: match.index,
-            length: fullMatch.length,
-            text: fullMatch,
-            url: fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`,
-            attributes: { rel: 'noopener', target: '_blank' }, 
-            };
-        },
-    ];
-
-    return (
-        <LexicalComposer initialConfig={initialConfig}>
-          <PlainTextPlugin
-            contentEditable={<ContentEditable className="text" />}
-            placeholder={<>...</>}
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-          <HashtagPlugin />
-          <AutoLinkPlugin matchers={MATCHERS} />
-        </LexicalComposer>
-      );
-  }
