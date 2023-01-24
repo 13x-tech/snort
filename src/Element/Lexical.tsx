@@ -1,6 +1,6 @@
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
 
-import {ReactNode} from 'react';
+import {ReactNode, useMemo} from 'react';
 import {HeadingNode} from '@lexical/rich-text'
 import {ListItemNode, ListNode} from '@lexical/list'
 import CustomHashtagNode from './Lexical/Hashtag';
@@ -47,6 +47,8 @@ import { MetadataCache } from 'Db/User';
       editorState: editorState(content),
     };
 
+    const matchers = useMemo(() => LINK_MATCHERS(tags, users), [tags,users])
+
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
@@ -56,7 +58,7 @@ import { MetadataCache } from 'Db/User';
             ErrorBoundary={LexicalErrorBoundary}
           />
           <AutoEmbedPlugin 
-            matchers={LINK_MATCHERS(tags,users)}
+            matchers={matchers}
           />
           <HashtagPlugin />
         </LexicalComposer>

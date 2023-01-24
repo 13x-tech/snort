@@ -86,7 +86,7 @@ export const LINK_MATCHERS = (tags?: Array<Tag>, users?: Map<string, MetadataCac
         matchMention.key = ref.Key
         switch(ref.Key) {
             case "p":
-                matchMention.pubKey = ref.PubKey
+                matchMention.pubKey = ref.PubKey;
                 break;
             case "e": {
                 matchMention.eText = hexToBech32("note", ref.Event!).substring(0, 12);
