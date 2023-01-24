@@ -50,7 +50,6 @@ import { hexToBech32 } from 'Util';
 
     const matchers = useMemo(() => LINK_MATCHERS(tags, users), [tags,users])
 
-
     return (
         <LexicalComposer initialConfig={initialConfig}>
           <HashtagPlugin />
