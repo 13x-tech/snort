@@ -11,7 +11,9 @@ import VoidUpload from "Feed/VoidUpload";
 import { FileExtensionRegex, VoidCatHost } from "Const";
 import Textarea from "Element/Textarea";
 import Modal from "Element/Modal";
-import { default as NEvent } from "Nostr/Event";
+import Event, { default as NEvent } from "Nostr/Event";
+import Editor from "./Lexical";
+import Tag from "Nostr/Tag";
 
 export interface NoteCreatorProps {
     show: boolean
@@ -28,6 +30,8 @@ export function NoteCreator(props: NoteCreatorProps) {
     const [note, setNote] = useState<string>();
     const [error, setError] = useState<string>();
     const [active, setActive] = useState<boolean>(false);
+
+    const [user, setUser] = useState()
 
     async function sendNote() {
         if (note) {
@@ -84,6 +88,10 @@ export function NoteCreator(props: NoteCreatorProps) {
         sendNote().catch(console.warn);
     }
 
+    const tags = new Array<Tag>();
+    const users = new Map();
+
+    if (!props.show) return null;
     return (
         <>
         <button className="note-create-button" type="button" onClick={() => setShow(!show)}>
@@ -93,7 +101,17 @@ export function NoteCreator(props: NoteCreatorProps) {
           <Modal onClose={props.onClose}>
             <div className={`flex note-creator ${props.replyTo ? 'note-reply' : ''}`}>
                 <div className="flex f-col mr10 f-grow">
-                    <Textarea
+                    <Editor 
+                        editable={true}
+                        onChange={onChange}
+                        content={note || ''}
+                        autoFocus={props.autoFocus}
+                        onFocus={() => setActive(true)}
+                        className={`textarea ${active ? "textarea--focused" : ""}`}
+                        tags={tags}
+                        users={users}
+                    />
+                    {/* <Textarea
                         autoFocus={props.autoFocus}
                         className={`textarea ${active ? "textarea--focused" : ""}`}
                         onChange={onChange}
@@ -104,6 +122,18 @@ export function NoteCreator(props: NoteCreatorProps) {
                     {(error?.length ?? 0) > 0 ? <b className="error">{error}</b> : null}
                     <FontAwesomeIcon icon={faPaperclip} size="xl" onClick={(e) => attachFile()} />
                 </div>
+                    /> */}
+                    {active && note && (
+                        <div className="actions flex f-row">
+                            <div className="attachment flex f-row">
+                                {(error?.length ?? 0) > 0 ? <b className="error">{error}</b> : null}
+                                <FontAwesomeIcon icon={faPaperclip} size="xl" onClick={(e) => attachFile()} />
+                            </div>
+                            <button type="button" className="btn" onClick={onSubmit}>
+                                {props.replyTo ? 'Reply' : 'Send'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="note-creator-actions">

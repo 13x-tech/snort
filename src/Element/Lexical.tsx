@@ -1,11 +1,13 @@
-import {LexicalComposer} from '@lexical/react/LexicalComposer';
+import "./Lexical.css";
 
-import {ReactNode, useMemo} from 'react';
+import {LexicalComposer} from '@lexical/react/LexicalComposer';
+import {ReactNode} from 'react';
 import {HeadingNode} from '@lexical/rich-text'
 import {ListItemNode, ListNode} from '@lexical/list'
 import CustomHashtagNode from './Lexical/Hashtag';
 
 import {PlainTextPlugin} from '@lexical/react/LexicalPlainTextPlugin';
+import {HistoryPlugin} from '@lexical/react/LexicalHistoryPlugin';
 import {ContentEditable} from '@lexical/react/LexicalContentEditable';
 import {HashtagPlugin} from '@lexical/react/LexicalHashtagPlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'; 
@@ -23,6 +25,9 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
   }
 
   interface EditorProps {
+    onChange?: (ev: any) => void;
+    onFocus?: (ev: any) => void;
+    autoFocus?: boolean;
     children?: ReactNode;
     editable?: boolean;
     className?: string
@@ -39,13 +44,17 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
       nodes: [
         ...CustomHashtagNode.nodes(),
         ...REGISTER_AUTO_NODES,
-        HeadingNode, ListNode, ListItemNode],
+        HeadingNode,
+        ListNode,
+        ListItemNode
+      ],
       editable: editable,
       editorState: editorState(content),
     };
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
+          <HistoryPlugin />
           <HashtagPlugin />
           <AutoEmbedPlugin 
             tags={tags}

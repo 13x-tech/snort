@@ -4,14 +4,14 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+import {useEffect} from 'react';
+import * as lexical from 'lexical';
+
 import {
-  $isAutoLinkNode, $createAutoLinkNode, $isLinkNode, LinkNode, AutoLinkNode
+  $isLinkNode, $createLinkNode, LinkNode 
 } from '@lexical/link';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
-import * as lexical from 'lexical';
-import {LexicalNode} from 'lexical'
-import * as react from 'react';
 import { $createImageNode, ImageNode } from './Image';
 import { $createVideoNode, VideoNode } from './Video';
 import { $createMentionNode, MentionNode } from './Mention';
@@ -54,7 +54,7 @@ function startsWithSeparator(textContent: string) {
   return isSeparator(textContent[0]);
 }
 
-function isPreviousNodeValid(node: LexicalNode) {
+function isPreviousNodeValid(node: lexical.LexicalNode) {
   let previousNode = node.getPreviousSibling();
 
   if (lexical.$isElementNode(previousNode)) {
@@ -64,7 +64,7 @@ function isPreviousNodeValid(node: LexicalNode) {
   return previousNode === null || lexical.$isLineBreakNode(previousNode) || lexical.$isTextNode(previousNode) && endsWithSeparator(previousNode.getTextContent());
 }
 
-function isNextNodeValid(node: LexicalNode) {
+function isNextNodeValid(node: lexical.LexicalNode) {
   let nextNode = node.getNextSibling();
 
   if (lexical.$isElementNode(nextNode)) {
@@ -74,7 +74,7 @@ function isNextNodeValid(node: LexicalNode) {
   return nextNode === null || lexical.$isLineBreakNode(nextNode) || lexical.$isTextNode(nextNode) && startsWithSeparator(nextNode.getTextContent());
 }
 
-function isContentAroundIsValid(matchStart: number, matchEnd: number, text: string, node: LexicalNode) {
+function isContentAroundIsValid(matchStart: number, matchEnd: number, text: string, node: lexical.LexicalNode) {
   const contentBeforeIsValid = matchStart > 0 ? isSeparator(text[matchStart - 1]) : isPreviousNodeValid(node);
 
   if (!contentBeforeIsValid) {
@@ -86,7 +86,7 @@ function isContentAroundIsValid(matchStart: number, matchEnd: number, text: stri
 }
 
 function handleLinkCreation(
-  node: LexicalNode,
+  node: lexical.LexicalNode,
   matchers: Array<(text:string)=> any>,
   tags: Array<Tag>,
   users: Map<string, MetadataCache>
@@ -111,8 +111,7 @@ function handleLinkCreation(
       } else {
         [,linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchStart, invalidMatchEnd + matchStart + matchLength);
       }
-      console.log('a match', match)
-      switch(true) {
+      switch(isValid) {
         case match.image: {
           const url = new URL(match.url)
           linkTextNode.replace($createImageNode(url.toString()))
@@ -140,7 +139,7 @@ function handleLinkCreation(
                 if(ref.Event) {
                   const eText = hexToBech32("note", ref.Event!).substring(0, 12);
                   const textNode = lexical.$createTextNode(eText);
-                  const linkNode = $createAutoLinkNode(`/note/${ref.Event}`, match.attributes);
+                  const linkNode = $createLinkNode(`/note/${ref.Event}`, match.attributes);
                   textNode.setFormat(linkTextNode.getFormat());
                   textNode.setDetail(linkTextNode.getDetail());
                   linkNode.append(textNode);
@@ -151,7 +150,7 @@ function handleLinkCreation(
               case "t": {
                 if(ref.Hashtag) {
                   const textNode = lexical.$createTextNode(ref.Hashtag);
-                  const linkNode = $createAutoLinkNode(`/t/${ref.Hashtag}`, match.attributes);
+                  const linkNode = $createLinkNode(`/t/${ref.Hashtag}`, match.attributes);
                   textNode.setFormat(linkTextNode.getFormat());
                   textNode.setDetail(linkTextNode.getDetail());
                   linkNode.append(textNode);
@@ -167,7 +166,7 @@ function handleLinkCreation(
         }
         default:
           const textNode = lexical.$createTextNode(match.text);
-          const linkNode = $createAutoLinkNode(match.url, match.attributes);
+          const linkNode = $createLinkNode(match.url, match.attributes);
           textNode.setFormat(linkTextNode.getFormat());
           textNode.setDetail(linkTextNode.getDetail());
           linkNode.append(textNode);
@@ -233,18 +232,18 @@ function handleLinkEdit(linkNode: LinkNode,  matchers: Array<(text:string)=> any
   }
 }
 
-// Bad neighbours are edits in neighbor nodes that make AutoLinks incompatible.
+// Bad neighbours are edits in neighbor nodes that make Links incompatible.
 // Given the creation preconditions, these can only be simple text nodes.
-function handleBadNeighbors(textNode: LexicalNode) {
+function handleBadNeighbors(textNode: lexical.LexicalNode) {
   const previousSibling = textNode.getPreviousSibling();
   const nextSibling = textNode.getNextSibling();
   const text = textNode.getTextContent();
 
-  if ($isAutoLinkNode(previousSibling) && !startsWithSeparator(text)) {
+  if ($isLinkNode(previousSibling) && !startsWithSeparator(text)) {
     replaceWithChildren(previousSibling);
   }
 
-  if ($isAutoLinkNode(nextSibling) && !endsWithSeparator(text)) {
+  if ($isLinkNode(nextSibling) && !endsWithSeparator(text)) {
     replaceWithChildren(nextSibling);
   }
 }
@@ -261,46 +260,45 @@ function replaceWithChildren(node: lexical.ElementNode) {
   return children.map(child => child.getLatest());
 }
 
-function useAutoLink(editor: lexical.LexicalEditor,  matchers: Array<(text:string)=> any>, tags: Array<Tag>, users: Map<string, MetadataCache>) {
-  react.useEffect(() => {
-    if (!editor.hasNodes([AutoLinkNode])) {
-      {
-        throw Error(`LexicalAutoLinkPlugin: AutoLinkNode not registered on editor`);
-      }
+const process = (editor: lexical.LexicalEditor,  matchers: Array<(text:string)=> any>, tags: Array<Tag>, users: Map<string, MetadataCache>) => {
+  if (!editor.hasNodes([LinkNode])) {
+    {
+      throw Error(`AutoEmbed: LinkNode not registered on editor`);
     }
+  }
 
-    return mergeRegister(editor.registerNodeTransform(lexical.TextNode, textNode => {
-      const parent = textNode.getParentOrThrow<LinkNode>();
+  return mergeRegister(editor.registerNodeTransform(lexical.TextNode, textNode => {
+    const parent = textNode.getParentOrThrow<LinkNode>();
 
-      if ($isAutoLinkNode(parent)) {
-        handleLinkEdit(parent, matchers);
-      } else if (!$isLinkNode(parent)) {
-        if (textNode.isSimpleText()) {
-          handleLinkCreation(textNode, matchers, tags, users);
-        }
-
-        handleBadNeighbors(textNode);
+    if ($isLinkNode(parent)) {
+      handleLinkEdit(parent, matchers);
+    } else if (!$isLinkNode(parent)) {
+      if (textNode.isSimpleText()) {
+        handleLinkCreation(textNode, matchers, tags, users);
       }
-    }));
-  }, [editor, matchers]);
+
+      handleBadNeighbors(textNode);
+    }
+  }));
 }
 
-interface AutoLinkProps{
+interface AutoEmbed{
   matchers: Array<(text:string)=>any>,
   tags: Array<Tag>,
   users: Map<string, MetadataCache>,
 }
 
-function AutoLinkPlugin({ matchers, tags, users }:AutoLinkProps):null {
+function AutoEmbed({ matchers, tags, users }: AutoEmbed):null {
   const [editor] = useLexicalComposerContext();
-  useAutoLink(editor, matchers, tags, users);
+  useEffect(() => {
+    process(editor, matchers, tags, users);
+  },[matchers,tags,users])
   return null;
 }
 
-export default AutoLinkPlugin;
+export default AutoEmbed;
 
 export const REGISTER_AUTO_NODES = [
-  AutoLinkNode,
   MentionNode,
   LinkNode,
   ImageNode,
