@@ -5,15 +5,16 @@
  * LICENSE file in the root directory of this source tree.
  */
 import {
-  $isAutoLinkNode, $createLinkNode, $createAutoLinkNode, $isLinkNode, LinkNode, AutoLinkNode, SerializedLinkNode
+  $isAutoLinkNode, $createAutoLinkNode, $isLinkNode, LinkNode, AutoLinkNode
 } from '@lexical/link';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
 import * as lexical from 'lexical';
 import {LexicalNode} from 'lexical'
 import * as react from 'react';
-import { FileExtensionRegex } from 'Const';
-import Mention from 'Element/Mention';
+import { ImageNode } from './Image';
+import { VideoNode } from './Video';
+import { $createMentionNode, MentionNode } from './Mention';
 
 
 /**
@@ -279,148 +280,6 @@ function AutoLinkPlugin({ matchers }:AutoLinkProps):null {
 
 export default AutoLinkPlugin;
 
-export class VideoNode extends lexical.DecoratorNode<react.ReactNode> {
-  __id: string;
-
-  static getType(): string {
-    return 'video';
-  }
-
-  static clone(node: VideoNode): VideoNode {
-    return new VideoNode(node.__id, node.__key);
-  }
-
-  constructor(id: string, key?: lexical.NodeKey) {
-    super(key);
-    this.__id = id;
-  }
-
-  createDOM(): HTMLElement {
-    return document.createElement('div');
-  }
-
-  updateDOM(): false {
-    return false;
-  }
-
-  decorate(): react.ReactNode {
-    return  <video key={this.__id} src={this.__id} controls />
-  }
-
-  static importJSON(serializedNode: SerializedLinkNode): VideoNode {
-    return new VideoNode(serializedNode.url)
-  }
-
-  exportJSON(): SerializedLinkNode {
-    return {
-      url: this.__id,
-    } as SerializedLinkNode;
-  }
-
-}
-
-export class MentionNode extends lexical.DecoratorNode<react.ReactNode> {
-  __pubKey: string;
-
-  static getType(): string {
-    return 'mention';
-  }
-
-  static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.__pubKey, node.__key);
-  }
-
-  constructor(pubKey: string, key?: lexical.NodeKey) {
-    super(key);
-    this.__pubKey = pubKey;
-  }
-
-  createDOM(): HTMLElement {
-    return document.createElement('span');
-  }
-
-  updateDOM(): false {
-    return false;
-  }
-
-  decorate(): react.ReactNode {
-    return  <Mention pubkey={this.__pubKey} />
-  }
-
-  static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-    return new MentionNode(serializedNode.pubKey)
-  }
-
-  exportJSON(): SerializedMentionNode {
-    return {
-      pubKey: this.__pubKey,
-    } as SerializedMentionNode;
-  }
-}
-
-export declare type SerializedMentionNode = lexical.Spread<{
-  type: 'link';
-}, lexical.Spread<{pubKey: string}, lexical.SerializedElementNode>>;
-
-export class ImageNode extends lexical.DecoratorNode<react.ReactNode> {
-  __id: string;
-
-  static getType(): string {
-    return 'img';
-  }
-
-  static clone(node: ImageNode): ImageNode {
-    return new ImageNode(node.__id, node.__key);
-  }
-
-  constructor(id: string, key?: lexical.NodeKey) {
-    super(key);
-    this.__id = id;
-  }
-
-  createDOM(): HTMLElement {
-    return document.createElement('div');
-  }
-
-  updateDOM(): false {
-    return false;
-  }
-
-  decorate(): react.ReactNode {
-    return  <img key={this.__id} src={this.__id} />;
-  }
-
-  static importJSON(serializedNode: SerializedLinkNode): ImageNode {
-    return new ImageNode(serializedNode.url)
-  }
-
-  exportJSON(): SerializedLinkNode {
-    return {
-      url: this.__id,
-    } as SerializedLinkNode;
-  }
-}
-
-export function $createImageNode(id: string): ImageNode {
-  return new ImageNode(id);
-}
-
-export function $isImageNode(node: LexicalNode): boolean {
-  return node instanceof ImageNode;
-}
-
-export function $createVideoNode(id: string): VideoNode {
-  return new VideoNode(id);
-}
-
-export function $isVideoNode(node: LexicalNode): boolean {
-  return node instanceof VideoNode;
-}
-
-export function $createMentionNode(pubKey: string): MentionNode {
-  return new MentionNode(pubKey);
-}
-
 export const REGISTER_AUTO_NODES = [
   AutoLinkNode,
   MentionNode,
@@ -428,4 +287,3 @@ export const REGISTER_AUTO_NODES = [
   ImageNode,
   VideoNode,
 ]
-
