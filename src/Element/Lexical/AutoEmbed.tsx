@@ -336,7 +336,7 @@ export class MentionNode extends lexical.DecoratorNode<react.ReactNode> {
   }
 
   createDOM(): HTMLElement {
-    return document.createElement('div');
+    return document.createElement('span');
   }
 
   updateDOM(): false {

@@ -6,6 +6,7 @@ import Connection, { RelaySettings } from "Nostr/Connection";
 import Event from "Nostr/Event";
 import EventKind from "Nostr/EventKind";
 import { Subscriptions } from "Nostr/Subscriptions";
+import { faSterlingSign } from "@fortawesome/free-solid-svg-icons";
 
 /**
  * Manages nostr content retrival system
@@ -31,11 +32,17 @@ export class NostrSystem {
      */
     WantsMetadata: Set<HexKey>;
 
+    Blocklist: Array<string>;
+
     constructor() {
         this.Sockets = new Map();
         this.Subscriptions = new Map();
         this.PendingSubscriptions = [];
         this.WantsMetadata = new Set();
+        this.Blocklist = [
+            "relay.nostr.info",
+            "brb.io",
+        ]
         this._FetchMetadata()
     }
 
@@ -44,6 +51,9 @@ export class NostrSystem {
      */
     ConnectToRelay(address: string, options: RelaySettings) {
         try {
+            if(this.Blocklist.find(b => address.includes(b))) {
+                return;
+            }
             if (!this.Sockets.has(address)) {
                 let c = new Connection(address, options);
                 this.Sockets.set(address, c);
@@ -97,6 +107,9 @@ export class NostrSystem {
      * Write an event to a relay then disconnect
      */
     async WriteOnceToRelay(address: string, ev: Event) {
+       if(this.Blocklist.find(b => address.includes(b))) {
+            return;
+        }
         let c = new Connection(address, { write: true, read: false });
         await c.SendAsync(ev);
         c.Close();
