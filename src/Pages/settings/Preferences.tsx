@@ -68,6 +68,15 @@ const PreferencesPage = () => {
                     <input type="checkbox" checked={perf.showDebugMenus} onChange={e => dispatch(setPreferences({ ...perf, showDebugMenus: e.target.checked }))} />
                 </div>
             </div>
+            <div className="card flex">
+                <div className="flex f-col f-grow">
+                    <div>Use Lexical</div>
+                    <small>Use an experimental editor and note renderer</small>
+                </div>
+                <div>
+                    <input type="checkbox" checked={perf.useLexical} onChange={e => dispatch(setPreferences({ ...perf, useLexical: e.target.checked }))} />
+                </div>
+            </div>
         </div>
     )
 }

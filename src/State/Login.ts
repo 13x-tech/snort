@@ -42,7 +42,10 @@ export interface UserPreferences {
      */
     showDebugMenus: boolean
 
-    useLexical: boolean
+    /**
+     * Use an experimental editor and note renderer
+     */
+     useLexical: boolean
 }
 
 export interface LoginStore {
@@ -120,7 +123,7 @@ const InitState = {
         confirmReposts: false,
         showDebugMenus: false,
         autoShowLatest: false,
-        useLexical: true,
+        useLexical: false,
     }
 } as LoginStore;
 
