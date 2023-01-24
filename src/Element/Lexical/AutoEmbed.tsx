@@ -15,6 +15,9 @@ import * as react from 'react';
 import { $createImageNode, ImageNode } from './Image';
 import { $createVideoNode, VideoNode } from './Video';
 import { $createMentionNode, MentionNode } from './Mention';
+import Tag from 'Nostr/Tag';
+import { MetadataCache } from 'Db/User';
+import { hexToBech32 } from 'Util';
 
 
 /**
@@ -84,7 +87,9 @@ function isContentAroundIsValid(matchStart: number, matchEnd: number, text: stri
 
 function handleLinkCreation(
   node: LexicalNode,
-  matchers: Array<(text:string)=> any>
+  matchers: Array<(text:string)=> any>,
+  tags: Array<Tag>,
+  users: Map<string, MetadataCache>
 ) {
   const nodeText = node.getTextContent();
   let text = nodeText;
@@ -117,34 +122,48 @@ function handleLinkCreation(
           linkTextNode.replace($createVideoNode(url.toString()))
           break;
         }
-        case match.key !== undefined: {
-          switch(match.key) {
-            case "p": {
-              linkTextNode.replace($createMentionNode(match.pubKey))
-              break;
+        case match.tagRefId: {
+          const id:number = match.tagRefId;
+          const ref = react.useMemo(() =>{
+            return tags?.find(a => a.Index === id)
+          },[tags,users])
+
+          if(ref) {
+            switch(ref.Key) {
+              case "p": {
+                if(ref.PubKey) {
+                  linkTextNode.replace($createMentionNode(ref.PubKey))
+                  break;
+                }
+              }
+              case "e": {
+                if(ref.Event) {
+                  const eText = hexToBech32("note", ref.Event!).substring(0, 12);
+                  const textNode = lexical.$createTextNode(eText);
+                  const linkNode = $createAutoLinkNode(`/note/${ref.Event}`, match.attributes);
+                  textNode.setFormat(linkTextNode.getFormat());
+                  textNode.setDetail(linkTextNode.getDetail());
+                  linkNode.append(textNode);
+                  linkTextNode.replace(linkNode);
+                  break;
+                }
+              }
+              case "t": {
+                if(ref.Hashtag) {
+                  const textNode = lexical.$createTextNode(ref.Hashtag);
+                  const linkNode = $createAutoLinkNode(`/t/${ref.Hashtag}`, match.attributes);
+                  textNode.setFormat(linkTextNode.getFormat());
+                  textNode.setDetail(linkTextNode.getDetail());
+                  linkNode.append(textNode);
+                  linkTextNode.replace(linkNode);
+                  break
+                }
+              }
+              default:
+                linkTextNode.replace(lexical.$createTextNode(match.text)) 
             }
-            case "e": {
-              const textNode = lexical.$createTextNode(match.eText);
-              const linkNode = $createAutoLinkNode(`/note/${match.Event}`, match.attributes);
-              textNode.setFormat(linkTextNode.getFormat());
-              textNode.setDetail(linkTextNode.getDetail());
-              linkNode.append(textNode);
-              linkTextNode.replace(linkNode);
-              break;
-            }
-            case "t": {
-              const textNode = lexical.$createTextNode(match.Hashtag);
-              const linkNode = $createAutoLinkNode(`/t/${match.Event}`, match.attributes);
-              textNode.setFormat(linkTextNode.getFormat());
-              textNode.setDetail(linkTextNode.getDetail());
-              linkNode.append(textNode);
-              linkTextNode.replace(linkNode);
-              break
-            }
-            default:
-              linkTextNode.replace(lexical.$createTextNode(match.text)) 
+            break;
           }
-          break;
         }
         default:
           const textNode = lexical.$createTextNode(match.text);
@@ -242,7 +261,7 @@ function replaceWithChildren(node: lexical.ElementNode) {
   return children.map(child => child.getLatest());
 }
 
-function useAutoLink(editor: lexical.LexicalEditor,  matchers: Array<(text:string)=> any>) {
+function useAutoLink(editor: lexical.LexicalEditor,  matchers: Array<(text:string)=> any>, tags: Array<Tag>, users: Map<string, MetadataCache>) {
   react.useEffect(() => {
     if (!editor.hasNodes([AutoLinkNode])) {
       {
@@ -257,7 +276,7 @@ function useAutoLink(editor: lexical.LexicalEditor,  matchers: Array<(text:strin
         handleLinkEdit(parent, matchers);
       } else if (!$isLinkNode(parent)) {
         if (textNode.isSimpleText()) {
-          handleLinkCreation(textNode, matchers);
+          handleLinkCreation(textNode, matchers, tags, users);
         }
 
         handleBadNeighbors(textNode);
@@ -268,11 +287,13 @@ function useAutoLink(editor: lexical.LexicalEditor,  matchers: Array<(text:strin
 
 interface AutoLinkProps{
   matchers: Array<(text:string)=>any>,
+  tags: Array<Tag>,
+  users: Map<string, MetadataCache>,
 }
 
-function AutoLinkPlugin({ matchers }:AutoLinkProps):null {
+function AutoLinkPlugin({ matchers, tags, users }:AutoLinkProps):null {
   const [editor] = useLexicalComposerContext();
-  useAutoLink(editor, matchers);
+  useAutoLink(editor, matchers, tags, users);
   return null;
 }
 

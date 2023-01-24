@@ -1,6 +1,6 @@
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
 
-import {ReactNode, useMemo} from 'react';
+import {ReactNode} from 'react';
 import {HeadingNode} from '@lexical/rich-text'
 import {ListItemNode, ListNode} from '@lexical/list'
 import CustomHashtagNode from './Lexical/Hashtag';
@@ -14,7 +14,6 @@ import AutoEmbedPlugin, { REGISTER_AUTO_NODES } from './Lexical/AutoEmbed';
 import Tag from 'Nostr/Tag';
 import { MetadataCache } from 'Db/User';
 import { FileExtensionRegex, UrlRegex } from 'Const';
-import { hexToBech32 } from 'Util';
 
   // Catch any errors that occur during Lexical updates and log them
   // or throw them as needed. If you don't throw them, Lexical will
@@ -33,12 +32,9 @@ import { hexToBech32 } from 'Util';
   }
 
   export default function Editor({ editable, content, tags, users }:EditorProps) {
-    const theme = {
-    } 
 
     const initialConfig = {
-      namespace: 'MyEditor',
-      theme,
+      namespace: 'SnortEditor',
       onError,
       nodes: [
         ...CustomHashtagNode.nodes(),
@@ -48,13 +44,13 @@ import { hexToBech32 } from 'Util';
       editorState: editorState(content),
     };
 
-    const matchers = useMemo(() => LINK_MATCHERS(tags, users), [tags,users])
-
     return (
         <LexicalComposer initialConfig={initialConfig}>
           <HashtagPlugin />
           <AutoEmbedPlugin 
-            matchers={matchers}
+            tags={tags}
+            users={users}
+            matchers={LINK_MATCHERS}
           />
           <PlainTextPlugin
             contentEditable={<ContentEditable className="text" />}
@@ -65,7 +61,7 @@ import { hexToBech32 } from 'Util';
       );
   }
 
-  export const LINK_MATCHERS = (tags?: Array<Tag>, users?: Map<string, MetadataCache>) => [
+  export const LINK_MATCHERS = [
     (text:string) => {
         const match = UrlRegex.exec(text);
         if (match === null) {
@@ -120,51 +116,39 @@ import { hexToBech32 } from 'Util';
         }
     },
     (text:string) => {
-      interface response {
-        index?: number,
-        length: number,
-        text: string,
-  
-        key?: string,
-        pubKey?: string,
-        eText?: string,
-        event?: string,
-        hashtag?: string,
-     }
-  
       const match = text.match(/#\[(\d+)\]/);
       if(match === null) {
           return null;
       }
       const fullMatch = match[0];
   
-      let matchMention:response = {
+      return {
           index: match.index,
           length: fullMatch.length,
-          text: fullMatch, 
+          text: fullMatch,
+          tagRefId: parseInt(match[1])
       }
   
-      const idx = parseInt(match[1]);
-      const ref = tags?.find(a => a.Index === idx);
-      if(ref) {
-          matchMention.key = ref.Key
-          switch(ref.Key) {
-              case "p":
-                  console.log(`should mention: ${ref.PubKey}`)
-                  matchMention.pubKey = ref.PubKey;
-                  return matchMention
-              case "e": {
-                  matchMention.eText = hexToBech32("note", ref.Event!).substring(0, 12);
-                  matchMention.event = ref.Event;
-                  return matchMention
-              }
-               case "t":
-                  matchMention.hashtag = ref.Hashtag
-                  return matchMention
-          }
-      }
+      // const idx = parseInt(match[1]);
+      // const ref = tags?.find(a => a.Index === idx);
+      // if(ref) {
+      //     matchMention.key = ref.Key
+      //     switch(ref.Key) {
+      //         case "p":
+      //             console.log(`should mention: ${ref.PubKey}`)
+      //             matchMention.pubKey = ref.PubKey;
+      //             return matchMention
+      //         case "e": {
+      //             matchMention.eText = hexToBech32("note", ref.Event!).substring(0, 12);
+      //             matchMention.event = ref.Event;
+      //             return matchMention
+      //         }
+      //          case "t":
+      //             matchMention.hashtag = ref.Hashtag
+      //             return matchMention
+      //     }
+      // }
   
-      return matchMention
     }
   ];
   
