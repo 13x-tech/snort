@@ -111,6 +111,7 @@ function handleLinkCreation(
       } else {
         [,linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchStart, invalidMatchEnd + matchStart + matchLength);
       }
+      console.log('a match', match)
       switch(true) {
         case match.image: {
           const url = new URL(match.url)
@@ -122,15 +123,14 @@ function handleLinkCreation(
           linkTextNode.replace($createVideoNode(url.toString()))
           break;
         }
-        case match.tagRefId: {
+        case !isNaN(match.tagRefId): {
           const id:number = match.tagRefId;
-          const ref = react.useMemo(() =>{
-            return tags?.find(a => a.Index === id)
-          },[tags,users])
+          const ref = tags?.find(a => a.Index === id)
 
           if(ref) {
             switch(ref.Key) {
               case "p": {
+                console.log('should mention', ref)
                 if(ref.PubKey) {
                   linkTextNode.replace($createMentionNode(ref.PubKey))
                   break;

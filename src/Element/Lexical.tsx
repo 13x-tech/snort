@@ -1,6 +1,6 @@
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
 
-import {ReactNode} from 'react';
+import {ReactNode, useMemo} from 'react';
 import {HeadingNode} from '@lexical/rich-text'
 import {ListItemNode, ListNode} from '@lexical/list'
 import CustomHashtagNode from './Lexical/Hashtag';
@@ -48,8 +48,8 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
         <LexicalComposer initialConfig={initialConfig}>
           <HashtagPlugin />
           <AutoEmbedPlugin 
-            tags={tags}
-            users={users}
+            tags={useMemo(() => tags,[tags])}
+            users={useMemo(() => users, [users])}
             matchers={LINK_MATCHERS}
           />
           <PlainTextPlugin
@@ -62,6 +62,7 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
   }
 
   export const LINK_MATCHERS = [
+    // Url Match
     (text:string) => {
         const match = UrlRegex.exec(text);
         if (match === null) {
@@ -115,40 +116,19 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
           return null
         }
     },
+    //Ref Match
     (text:string) => {
       const match = text.match(/#\[(\d+)\]/);
       if(match === null) {
           return null;
       }
       const fullMatch = match[0];
-  
       return {
           index: match.index,
           length: fullMatch.length,
           text: fullMatch,
           tagRefId: parseInt(match[1])
       }
-  
-      // const idx = parseInt(match[1]);
-      // const ref = tags?.find(a => a.Index === idx);
-      // if(ref) {
-      //     matchMention.key = ref.Key
-      //     switch(ref.Key) {
-      //         case "p":
-      //             console.log(`should mention: ${ref.PubKey}`)
-      //             matchMention.pubKey = ref.PubKey;
-      //             return matchMention
-      //         case "e": {
-      //             matchMention.eText = hexToBech32("note", ref.Event!).substring(0, 12);
-      //             matchMention.event = ref.Event;
-      //             return matchMention
-      //         }
-      //          case "t":
-      //             matchMention.hashtag = ref.Hashtag
-      //             return matchMention
-      //     }
-      // }
-  
     }
   ];
   
