@@ -10,7 +10,7 @@
     margin: 10px;
 }
 
-.note-creator textarea {
+.note-creator .textarea {
     outline: none;
     resize: none;
     background-color: var(--note-bg);

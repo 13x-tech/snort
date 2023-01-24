@@ -36,7 +36,7 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
     users: Map<string, MetadataCache>
   }
 
-  export default function Editor({ editable, content, tags, users }:EditorProps) {
+  export default function Editor({ editable, content, tags, users, className }:EditorProps) {
 
     const initialConfig = {
       namespace: 'SnortEditor',
@@ -53,31 +53,37 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
     };
 
     return (
+      <span className={editable ? 'rta ' + className : className}>
         <LexicalComposer initialConfig={initialConfig}>
           <HistoryPlugin />
-          <HashtagPlugin />
+          {/* <HashtagPlugin /> */}
           <AutoEmbedPlugin 
             tags={tags}
             users={users}
             matchers={LINK_MATCHERS}
           />
           <PlainTextPlugin
-            contentEditable={<ContentEditable className="text" />}
-            placeholder={<>...</>}
+            contentEditable={<ContentEditable className="textarea" />}
+            placeholder={(editable) => editable ? <span className="placeholder">Say Something!</span> : null}
             ErrorBoundary={LexicalErrorBoundary}
           />
         </LexicalComposer>
-      );
+      </span>
+    );
   }
 
   export const LINK_MATCHERS = [
     // Url Match
     (text:string) => {
-        const match = UrlRegex.exec(text);
+      const URL_MATCHER =
+        /(?:[a-z]+:)?\/\/[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,12}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
+
+        const match = URL_MATCHER.exec(text);
         if (match === null) {
         return null;
         }
         const fullMatch = match[0];
+        console.log('full Match', text)
         try {
           const url = new URL(fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`)
           const extension = FileExtensionRegex.test(url.pathname.toLowerCase()) && RegExp.$1;

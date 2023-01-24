@@ -1,0 +1,28 @@
+.editable.image {
+  display: flex;
+  flex-direction: column;
+}
+
+.editable.image .edit-header span {
+  font-size: .9em;
+  padding: 5px;
+  float: right;
+  margin-right: 2px;
+}
+
+.editable.image .edit-header .fa-x {
+  font-size: .9em;
+  padding: 8px 8px 3px;
+}
+
+.editable.image .edit-header {
+  margin: 5px;
+  padding: 2px;
+  background: var(--gray);
+  border-radius: 10px;
+}
+
+
+.editable.image img {
+  padding: 5px;
+}

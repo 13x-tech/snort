@@ -14,6 +14,9 @@ import Modal from "Element/Modal";
 import Event, { default as NEvent } from "Nostr/Event";
 import Editor from "./Lexical";
 import Tag from "Nostr/Tag";
+import { useSelector } from "react-redux";
+import { RootState } from "State/Store";
+import { UserPreferences } from "State/Login";
 
 export interface NoteCreatorProps {
     show: boolean
@@ -30,8 +33,8 @@ export function NoteCreator(props: NoteCreatorProps) {
     const [note, setNote] = useState<string>();
     const [error, setError] = useState<string>();
     const [active, setActive] = useState<boolean>(false);
+    const pref = useSelector<RootState, UserPreferences>(s => s.login.preferences);
 
-    const [user, setUser] = useState()
 
     async function sendNote() {
         if (note) {
@@ -101,7 +104,8 @@ export function NoteCreator(props: NoteCreatorProps) {
           <Modal onClose={props.onClose}>
             <div className={`flex note-creator ${props.replyTo ? 'note-reply' : ''}`}>
                 <div className="flex f-col mr10 f-grow">
-                    <Editor 
+                    {pref.useLexical && (
+                        <Editor 
                         editable={true}
                         onChange={onChange}
                         content={note || ''}
@@ -110,19 +114,16 @@ export function NoteCreator(props: NoteCreatorProps) {
                         className={`textarea ${active ? "textarea--focused" : ""}`}
                         tags={tags}
                         users={users}
-                    />
-                    {/* <Textarea
+                        />
+                    ) || (
+                        <Textarea
                         autoFocus={props.autoFocus}
                         className={`textarea ${active ? "textarea--focused" : ""}`}
                         onChange={onChange}
                         value={note}
                         onFocus={() => setActive(true)}
                     />
-                <div className="attachment">
-                    {(error?.length ?? 0) > 0 ? <b className="error">{error}</b> : null}
-                    <FontAwesomeIcon icon={faPaperclip} size="xl" onClick={(e) => attachFile()} />
-                </div>
-                    /> */}
+                    )}
                     {active && note && (
                         <div className="actions flex f-row">
                             <div className="attachment flex f-row">

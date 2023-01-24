@@ -1,3 +1,6 @@
 [contenteditable]:focus {
-  outline: 0px solid transparent;
+    outline: 0px solid transparent;
+}
+[contenteditable] {
+  width: 100%;
 }

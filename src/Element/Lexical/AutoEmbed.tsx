@@ -12,7 +12,7 @@ import {
 } from '@lexical/link';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
-import { $createImageNode, ImageNode } from './Image';
+import { $createEditableImageNode, $createImageNode, EditableImageNode, ImageNode } from './Image';
 import { $createVideoNode, VideoNode } from './Video';
 import { $createMentionNode, MentionNode } from './Mention';
 import Tag from 'Nostr/Tag';
@@ -89,7 +89,8 @@ function handleLinkCreation(
   node: lexical.LexicalNode,
   matchers: Array<(text:string)=> any>,
   tags: Array<Tag>,
-  users: Map<string, MetadataCache>
+  users: Map<string, MetadataCache>,
+  isEditable: boolean
 ) {
   const nodeText = node.getTextContent();
   let text = nodeText;
@@ -114,7 +115,11 @@ function handleLinkCreation(
       switch(isValid) {
         case match.image: {
           const url = new URL(match.url)
-          linkTextNode.replace($createImageNode(url.toString()))
+          if(isEditable) {
+            linkTextNode.replace($createEditableImageNode(url.toString()))
+          } else {
+            linkTextNode.replace($createImageNode(url.toString()))
+          }
           break;
         }
         case match.video: {
@@ -274,7 +279,7 @@ const process = (editor: lexical.LexicalEditor,  matchers: Array<(text:string)=>
       handleLinkEdit(parent, matchers);
     } else if (!$isLinkNode(parent)) {
       if (textNode.isSimpleText()) {
-        handleLinkCreation(textNode, matchers, tags, users);
+        handleLinkCreation(textNode, matchers, tags, users, editor.isEditable());
       }
 
       handleBadNeighbors(textNode);
@@ -302,5 +307,6 @@ export const REGISTER_AUTO_NODES = [
   MentionNode,
   LinkNode,
   ImageNode,
+  EditableImageNode,
   VideoNode,
 ]
