@@ -48,8 +48,8 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
         <LexicalComposer initialConfig={initialConfig}>
           <HashtagPlugin />
           <AutoEmbedPlugin 
-            tags={useMemo(() => tags,[tags])}
-            users={useMemo(() => users, [users])}
+            tags={tags}
+            users={users}
             matchers={LINK_MATCHERS}
           />
           <PlainTextPlugin
