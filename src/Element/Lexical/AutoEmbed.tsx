@@ -106,7 +106,6 @@ function handleLinkCreation(
       } else {
         [,linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchStart, invalidMatchEnd + matchStart + matchLength);
       }
-
       switch(true) {
         case match.image: {
           const url = new URL(match.url)
@@ -118,10 +117,9 @@ function handleLinkCreation(
           linkTextNode.replace($createVideoNode(url.toString()))
           break;
         }
-        case match.key: {
+        case match.key !== undefined: {
           switch(match.key) {
             case "p": {
-              console.log(`mention: ${match.pubKey}`)
               linkTextNode.replace($createMentionNode(match.pubKey))
               break;
             }
