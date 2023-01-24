@@ -25,6 +25,10 @@ export interface VideoNodeProps {
 //   ""
 // }
 
+export const DefaultVideoProps:VideoNodeProps =  {
+  controls: true
+}
+
 export class VideoNode extends DecoratorNode<ReactNode> {
   __src: string;
   __videoProps?: VideoNodeProps
@@ -38,9 +42,9 @@ export class VideoNode extends DecoratorNode<ReactNode> {
   }
 
   constructor(src: string, props?: VideoNodeProps, key?: NodeKey) {
-    super(key || src);
+    super(key);
     this.__src = src;
-    this.__videoProps = props;
+    this.__videoProps = props ? props: DefaultVideoProps;
   }
 
   createDOM(): HTMLElement {
@@ -56,7 +60,7 @@ export class VideoNode extends DecoratorNode<ReactNode> {
       key={this.__key}
       src={this.__src}
       controls={this.__videoProps?.controls}
-    />
+    />;
   }
 
   static importJSON(serializedNode: SerializedVideoNode): VideoNode {

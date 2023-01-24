@@ -214,10 +214,10 @@ function handleLinkEdit(linkNode: LinkNode,  matchers: Array<(text:string)=> any
       linkNode.setTarget(match.attributes.target || null);
     }
   }
-} // Bad neighbours are edits in neighbor nodes that make AutoLinks incompatible.
+}
+
+// Bad neighbours are edits in neighbor nodes that make AutoLinks incompatible.
 // Given the creation preconditions, these can only be simple text nodes.
-
-
 function handleBadNeighbors(textNode: LexicalNode) {
   const previousSibling = textNode.getPreviousSibling();
   const nextSibling = textNode.getNextSibling();

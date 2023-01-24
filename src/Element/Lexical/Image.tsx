@@ -37,7 +37,7 @@ export class ImageNode extends DecoratorNode<ReactNode> {
   }
 
   decorate(): ReactNode {
-    return  <img key={this.__id} src={this.__id} alt={this.__alt} className={this.__className} />;
+    return  <img key={this.__key} src={this.__src} alt={this.__alt} className={this.__className} />;
   }
 
   static importJSON(serialized: SerializedImageNode): ImageNode {
@@ -58,8 +58,8 @@ export declare type SerializedImageNode = Spread<{
   type: 'img';
 }, Spread<ImageNodeProps, SerializedElementNode>>;
 
-export function $createImageNode(id: string): ImageNode {
-  return new ImageNode(id);
+export function $createImageNode(src: string, alt?: string, className?: string, key?: string ): ImageNode {
+  return new ImageNode(src, alt, className, key);
 }
 
 export function $isImageNode(node: LexicalNode): boolean {
