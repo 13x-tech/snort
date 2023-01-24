@@ -213,6 +213,7 @@ export interface TextProps {
 
 export default function Text({ content, tags, users }: TextProps) {
     const pref = useSelector<RootState, UserPreferences>(s => s.login.preferences);
+
     const components = useMemo(() => {
         return {
             p: (x: any) => transformParagraph({ body: x.children ?? [], tags, users, pref }),

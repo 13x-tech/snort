@@ -1,243 +1,405 @@
-// /**
-//  * Copyright (c) Meta Platforms, Inc. and affiliates.
-//  *
-//  * This source code is licensed under the MIT license found in the
-//  * LICENSE file in the root directory of this source tree.
-//  */
-// import {
-//   $isAutoLinkNode, $createLinkNode, $createAutoLinkNode, LinkNode
-// } from '@lexical/link';
-// import {LexicalComposerContext} from '@lexical/react/LexicalComposerContext';
-// import {mergeRegister} from '@lexical/utils';
-// import * as lexical from 'lexical';
-// import * as react from 'react';
-
-// /**
-//  * Copyright (c) Meta Platforms, Inc. and affiliates.
-//  *
-//  * This source code is licensed under the MIT license found in the
-//  * LICENSE file in the root directory of this source tree.
-//  *
-//  */
-
-// function findFirstMatch(text, matchers) {
-//   for (let i = 0; i < matchers.length; i++) {
-//     const match = matchers[i](text);
-
-//     if (match) {
-//       return match;
-//     }
-//   }
-
-//   return null;
-// }
-
-// const PUNCTUATION_OR_SPACE = /[.,;\s]/;
-
-// function isSeparator(char) {
-//   return PUNCTUATION_OR_SPACE.test(char);
-// }
-
-// function endsWithSeparator(textContent) {
-//   return isSeparator(textContent[textContent.length - 1]);
-// }
-
-// function startsWithSeparator(textContent) {
-//   return isSeparator(textContent[0]);
-// }
-
-// function isPreviousNodeValid(node) {
-//   let previousNode = node.getPreviousSibling();
-
-//   if (lexical.$isElementNode(previousNode)) {
-//     previousNode = previousNode.getLastDescendant();
-//   }
-
-//   return previousNode === null || lexical.$isLineBreakNode(previousNode) || lexical.$isTextNode(previousNode) && endsWithSeparator(previousNode.getTextContent());
-// }
-
-// function isNextNodeValid(node) {
-//   let nextNode = node.getNextSibling();
-
-//   if (lexical.$isElementNode(nextNode)) {
-//     nextNode = nextNode.getFirstDescendant();
-//   }
-
-//   return nextNode === null || lexical.$isLineBreakNode(nextNode) || lexical.$isTextNode(nextNode) && startsWithSeparator(nextNode.getTextContent());
-// }
-
-// function isContentAroundIsValid(matchStart, matchEnd, text, node) {
-//   const contentBeforeIsValid = matchStart > 0 ? isSeparator(text[matchStart - 1]) : isPreviousNodeValid(node);
-
-//   if (!contentBeforeIsValid) {
-//     return false;
-//   }
-
-//   const contentAfterIsValid = matchEnd < text.length ? isSeparator(text[matchEnd]) : isNextNodeValid(node);
-//   return contentAfterIsValid;
-// }
-
-// function handleLinkCreation(node, matchers, onChange) {
-//   const nodeText = node.getTextContent();
-//   let text = nodeText;
-//   let invalidMatchEnd = 0;
-//   let remainingTextNode = node;
-//   let match;
-
-//   while ((match = findFirstMatch(text, matchers)) && match !== null) {
-//     const matchStart = match.index;
-//     const matchLength = match.length;
-//     const matchEnd = matchStart + matchLength;
-//     const isValid = isContentAroundIsValid(invalidMatchEnd + matchStart, invalidMatchEnd + matchEnd, nodeText, node);
-
-//     if (isValid) {
-//       let linkTextNode;
-
-//       if (invalidMatchEnd + matchStart === 0) {
-//         [linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchLength);
-//       } else {
-//         [, linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchStart, invalidMatchEnd + matchStart + matchLength);
-//       }
-
-//       const linkNode = link.$createAutoLinkNode(match.url, match.attributes);
-//       const textNode = lexical.$createTextNode(match.text);
-//       textNode.setFormat(linkTextNode.getFormat());
-//       textNode.setDetail(linkTextNode.getDetail());
-//       linkNode.append(textNode);
-//       linkTextNode.replace(linkNode);
-//       onChange(match.url, null);
-//       invalidMatchEnd = 0;
-//     } else {
-//       invalidMatchEnd += matchEnd;
-//     }
-
-//     text = text.substring(matchEnd);
-//   }
-// }
-
-// function handleLinkEdit(linkNode, matchers, onChange) {
-//   // Check children are simple text
-//   const children = linkNode.getChildren();
-//   const childrenLength = children.length;
-
-//   for (let i = 0; i < childrenLength; i++) {
-//     const child = children[i];
-
-//     if (!lexical.$isTextNode(child) || !child.isSimpleText()) {
-//       replaceWithChildren(linkNode);
-//       onChange(null, linkNode.getURL());
-//       return;
-//     }
-//   } // Check text content fully matches
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+import {
+  $isAutoLinkNode, $createLinkNode, $createAutoLinkNode, $isLinkNode, LinkNode, AutoLinkNode
+} from '@lexical/link';
+import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
+import {mergeRegister} from '@lexical/utils';
+import * as lexical from 'lexical';
+import {LexicalNode} from 'lexical'
+import * as react from 'react';
+import { FileExtensionRegex } from 'Const';
+import Tag from 'Nostr/Tag';
+import { MetadataCache } from 'Db/User';
+import Mention from 'Element/Mention';
 
 
-//   const text = linkNode.getTextContent();
-//   const match = findFirstMatch(text, matchers);
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
 
-//   if (match === null || match.text !== text) {
-//     replaceWithChildren(linkNode);
-//     onChange(null, linkNode.getURL());
-//     return;
-//   } // Check neighbors
+function findFirstMatch(text: string, matchers: Array<(text:string) => any>) {
+  for (let i = 0; i < matchers.length; i++) {
+    const match = matchers[i](text);
+
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
+const PUNCTUATION_OR_SPACE = /[.,;\s]/;
+
+function isSeparator(char: string) {
+  return PUNCTUATION_OR_SPACE.test(char);
+}
+
+function endsWithSeparator(textContent: string) {
+  return isSeparator(textContent[textContent.length - 1]);
+}
+
+function startsWithSeparator(textContent: string) {
+  return isSeparator(textContent[0]);
+}
+
+function isPreviousNodeValid(node: LexicalNode) {
+  let previousNode = node.getPreviousSibling();
+
+  if (lexical.$isElementNode(previousNode)) {
+    previousNode = previousNode.getLastDescendant();
+  }
+
+  return previousNode === null || lexical.$isLineBreakNode(previousNode) || lexical.$isTextNode(previousNode) && endsWithSeparator(previousNode.getTextContent());
+}
+
+function isNextNodeValid(node: LexicalNode) {
+  let nextNode = node.getNextSibling();
+
+  if (lexical.$isElementNode(nextNode)) {
+    nextNode = nextNode.getFirstDescendant();
+  }
+
+  return nextNode === null || lexical.$isLineBreakNode(nextNode) || lexical.$isTextNode(nextNode) && startsWithSeparator(nextNode.getTextContent());
+}
+
+function isContentAroundIsValid(matchStart: number, matchEnd: number, text: string, node: LexicalNode) {
+  const contentBeforeIsValid = matchStart > 0 ? isSeparator(text[matchStart - 1]) : isPreviousNodeValid(node);
+
+  if (!contentBeforeIsValid) {
+    return false;
+  }
+
+  const contentAfterIsValid = matchEnd < text.length ? isSeparator(text[matchEnd]) : isNextNodeValid(node);
+  return contentAfterIsValid;
+}
+
+function handleLinkCreation(
+  node: LexicalNode,
+  matchers: Array<(text:string)=> any>
+) {
+  const nodeText = node.getTextContent();
+  let text = nodeText;
+  let invalidMatchEnd = 0;
+  let remainingTextNode = node;
+  let match;
+
+  while ((match = findFirstMatch(text, matchers)) && match !== null) {
+    const matchStart = match.index;
+    const matchLength = match.length;
+    const matchEnd = matchStart + matchLength;
+    const isValid = isContentAroundIsValid(invalidMatchEnd + matchStart, invalidMatchEnd + matchEnd, nodeText, node);
+
+    if (isValid) {
+      let linkTextNode;
+
+      if (invalidMatchEnd + matchStart === 0) {
+        [linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchLength);
+      } else {
+        [,linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchStart, invalidMatchEnd + matchStart + matchLength);
+      }
+
+      if(match.url) {
+        const url = new URL(match.url)
+        const extension = FileExtensionRegex.test(url.pathname.toLowerCase()) && RegExp.$1;
+        switch (extension) {
+            case "gif":
+            case "jpg":
+            case "jpeg":
+            case "png":
+            case "bmp":
+            case "webp": {
+              linkTextNode.replace($createImageNode(url.toString()))
+              break;
+            }
+            case "mp4":
+            case "mov":
+            case "mkv":
+            case "avi":
+            case "m4v": {
+                linkTextNode.replace($createVideoNode(url.toString()))
+                break;
+            }
+            default:
+              const textNode = lexical.$createTextNode(match.text);
+              const linkNode = $createAutoLinkNode(match.url, match.attributes);
+              textNode.setFormat(linkTextNode.getFormat());
+              textNode.setDetail(linkTextNode.getDetail());
+              linkNode.append(textNode);
+              linkTextNode.replace(linkNode);
+        }
+      } else if(match.key) {
+        switch(match.key) {
+          case "p": {
+            linkTextNode.replace(new MentionNode(match.pubKey))
+            break;
+          }
+          case "e": {
+            const textNode = lexical.$createTextNode(match.eText);
+            const linkNode = $createAutoLinkNode(`/note/${match.Event}`, match.attributes);
+            textNode.setFormat(linkTextNode.getFormat());
+            textNode.setDetail(linkTextNode.getDetail());
+            linkNode.append(textNode);
+            linkTextNode.replace(linkNode);
+            break;
+          }
+          case "t": {
+            const textNode = lexical.$createTextNode(match.Hashtag);
+            const linkNode = $createAutoLinkNode(`/t/${match.Event}`, match.attributes);
+            textNode.setFormat(linkTextNode.getFormat());
+            textNode.setDetail(linkTextNode.getDetail());
+            linkNode.append(textNode);
+            linkTextNode.replace(linkNode);
+            break
+          }
+          default:
+            linkTextNode.replace(lexical.$createTextNode(match.text))
+        }
+      } else {
+        console.log('match fuck', match)
+        linkTextNode.replace(lexical.$createTextNode(match.text))
+      } 
+
+      invalidMatchEnd = 0;
+    } else {
+      invalidMatchEnd += matchEnd;
+    }
+
+    text = text.substring(matchEnd);
+  }
+}
+
+function handleLinkEdit(linkNode: LinkNode,  matchers: Array<(text:string)=> any>) {
+  // Check children are simple text
+  const children = linkNode.getChildren();
+  const childrenLength = children.length;
+
+  for (let i = 0; i < childrenLength; i++) {
+    const child = children[i];
+
+    if (!lexical.$isTextNode(child) || !child.isSimpleText()) {
+      replaceWithChildren(linkNode);
+      return;
+    }
+  } // Check text content fully matches
 
 
-//   if (!isPreviousNodeValid(linkNode) || !isNextNodeValid(linkNode)) {
-//     replaceWithChildren(linkNode);
-//     onChange(null, linkNode.getURL());
-//     return;
-//   }
+  const text = linkNode.getTextContent();
+  const match = findFirstMatch(text, matchers);
 
-//   const url = linkNode.getURL();
-
-//   if (url !== match.url) {
-//     linkNode.setURL(match.url);
-//     onChange(match.url, url);
-//   }
-
-//   if (match.attributes) {
-//     const rel = linkNode.getRel();
-
-//     if (rel !== match.attributes.rel) {
-//       linkNode.setRel(match.attributes.rel || null);
-//       onChange(match.attributes.rel || null, rel);
-//     }
-
-//     const target = linkNode.getTarget();
-
-//     if (target !== match.attributes.target) {
-//       linkNode.setTarget(match.attributes.target || null);
-//       onChange(match.attributes.target || null, target);
-//     }
-//   }
-// } // Bad neighbours are edits in neighbor nodes that make AutoLinks incompatible.
-// // Given the creation preconditions, these can only be simple text nodes.
+  if (match === null || match.text !== text) {
+    replaceWithChildren(linkNode);
+    return;
+  } // Check neighbors
 
 
-// function handleBadNeighbors(textNode, onChange) {
-//   const previousSibling = textNode.getPreviousSibling();
-//   const nextSibling = textNode.getNextSibling();
-//   const text = textNode.getTextContent();
+  if (!isPreviousNodeValid(linkNode) || !isNextNodeValid(linkNode)) {
+    replaceWithChildren(linkNode);
+    return;
+  }
 
-//   if (link.$isAutoLinkNode(previousSibling) && !startsWithSeparator(text)) {
-//     replaceWithChildren(previousSibling);
-//     onChange(null, previousSibling.getURL());
-//   }
+  const url = linkNode.getURL();
 
-//   if (link.$isAutoLinkNode(nextSibling) && !endsWithSeparator(text)) {
-//     replaceWithChildren(nextSibling);
-//     onChange(null, nextSibling.getURL());
-//   }
-// }
+  if (url !== match.url) {
+    linkNode.setURL(match.url);
+  }
 
-// function replaceWithChildren(node) {
-//   const children = node.getChildren();
-//   const childrenLength = children.length;
+  if (match.attributes) {
+    const rel = linkNode.getRel();
 
-//   for (let j = childrenLength - 1; j >= 0; j--) {
-//     node.insertAfter(children[j]);
-//   }
+    if (rel !== match.attributes.rel) {
+      linkNode.setRel(match.attributes.rel || null);
+    }
 
-//   node.remove();
-//   return children.map(child => child.getLatest());
-// }
+    const target = linkNode.getTarget();
 
-// function useAutoLink(editor, matchers, onChange) {
-//   react.useEffect(() => {
-//     if (!editor.hasNodes([link.AutoLinkNode])) {
-//       {
-//         throw Error(`LexicalAutoLinkPlugin: AutoLinkNode not registered on editor`);
-//       }
-//     }
+    if (target !== match.attributes.target) {
+      linkNode.setTarget(match.attributes.target || null);
+    }
+  }
+} // Bad neighbours are edits in neighbor nodes that make AutoLinks incompatible.
+// Given the creation preconditions, these can only be simple text nodes.
 
-//     const onChangeWrapped = (url, prevUrl) => {
-//       if (onChange) {
-//         onChange(url, prevUrl);
-//       }
-//     };
 
-//     return utils.mergeRegister(editor.registerNodeTransform(lexical.TextNode, textNode => {
-//       const parent = textNode.getParentOrThrow();
+function handleBadNeighbors(textNode: LexicalNode) {
+  const previousSibling = textNode.getPreviousSibling();
+  const nextSibling = textNode.getNextSibling();
+  const text = textNode.getTextContent();
 
-//       if (link.$isAutoLinkNode(parent)) {
-//         handleLinkEdit(parent, matchers, onChangeWrapped);
-//       } else if (!link.$isLinkNode(parent)) {
-//         if (textNode.isSimpleText()) {
-//           handleLinkCreation(textNode, matchers, onChangeWrapped);
-//         }
+  if ($isAutoLinkNode(previousSibling) && !startsWithSeparator(text)) {
+    replaceWithChildren(previousSibling);
+  }
 
-//         handleBadNeighbors(textNode, onChangeWrapped);
-//       }
-//     }));
-//   }, [editor, matchers, onChange]);
-// }
+  if ($isAutoLinkNode(nextSibling) && !endsWithSeparator(text)) {
+    replaceWithChildren(nextSibling);
+  }
+}
 
-// function AutoLinkPlugin({
-//   matchers,
-//   onChange
-// }) {
-//   const [editor] = LexicalComposerContext.useLexicalComposerContext();
-//   useAutoLink(editor, matchers, onChange);
-//   return null;
-// }
+function replaceWithChildren(node: lexical.ElementNode) {
+  const children = node.getChildren();
+  const childrenLength = children.length;
 
-// exports.AutoLinkPlugin = AutoLinkPlugin;
+  for (let j = childrenLength - 1; j >= 0; j--) {
+    node.insertAfter(children[j]);
+  }
+
+  node.remove();
+  return children.map(child => child.getLatest());
+}
+
+function useAutoLink(editor: lexical.LexicalEditor,  matchers: Array<(text:string)=> any>) {
+  react.useEffect(() => {
+    if (!editor.hasNodes([AutoLinkNode])) {
+      {
+        throw Error(`LexicalAutoLinkPlugin: AutoLinkNode not registered on editor`);
+      }
+    }
+
+    return mergeRegister(editor.registerNodeTransform(lexical.TextNode, textNode => {
+      const parent = textNode.getParentOrThrow<LinkNode>();
+
+      if ($isAutoLinkNode(parent)) {
+        handleLinkEdit(parent, matchers);
+      } else if (!$isLinkNode(parent)) {
+        if (textNode.isSimpleText()) {
+          handleLinkCreation(textNode, matchers);
+        }
+
+        handleBadNeighbors(textNode);
+      }
+    }));
+  }, [editor, matchers]);
+}
+
+interface AutoLinkProps{
+  matchers: Array<(text:string)=>any>,
+}
+
+function AutoLinkPlugin({ matchers }:AutoLinkProps):null {
+  const [editor] = useLexicalComposerContext();
+  useAutoLink(editor, matchers);
+  return null;
+}
+
+export default AutoLinkPlugin;
+
+export class VideoNode extends lexical.DecoratorNode<react.ReactNode> {
+  __id: string;
+
+  static getType(): string {
+    return 'video';
+  }
+
+  static clone(node: VideoNode): VideoNode {
+    return new VideoNode(node.__id, node.__key);
+  }
+
+  constructor(id: string, key?: lexical.NodeKey) {
+    super(key);
+    this.__id = id;
+  }
+
+  createDOM(): HTMLElement {
+    return document.createElement('div');
+  }
+
+  updateDOM(): false {
+    return false;
+  }
+
+  decorate(): react.ReactNode {
+    return  <video key={this.__id} src={this.__id} controls />
+  }
+}
+
+export class MentionNode extends lexical.DecoratorNode<react.ReactNode> {
+  __pubKey: string;
+
+  static getType(): string {
+    return 'mention';
+  }
+
+  static clone(node: MentionNode): MentionNode {
+    return new MentionNode(node.__pubKey, node.__key);
+  }
+
+  constructor(pubKey: string, key?: lexical.NodeKey) {
+    super(key);
+    this.__pubKey = pubKey;
+  }
+
+  createDOM(): HTMLElement {
+    return document.createElement('div');
+  }
+
+  updateDOM(): false {
+    return false;
+  }
+
+  decorate(): react.ReactNode {
+    return  <Mention pubkey={this.__pubKey} />
+  }
+}
+
+export class ImageNode extends lexical.DecoratorNode<react.ReactNode> {
+  __id: string;
+
+  static getType(): string {
+    return 'img';
+  }
+
+  static clone(node: ImageNode): ImageNode {
+    return new ImageNode(node.__id, node.__key);
+  }
+
+  constructor(id: string, key?: lexical.NodeKey) {
+    super(key);
+    this.__id = id;
+  }
+
+  createDOM(): HTMLElement {
+    return document.createElement('div');
+  }
+
+  updateDOM(): false {
+    return false;
+  }
+
+  decorate(): react.ReactNode {
+    return  <img key={this.__id} src={this.__id} />;
+  }
+}
+
+export function $createImageNode(id: string): ImageNode {
+  return new ImageNode(id);
+}
+
+export function $isImageNode(node: LexicalNode): boolean {
+  return node instanceof ImageNode;
+}
+
+export function $createVideoNode(id: string): VideoNode {
+  return new VideoNode(id);
+}
+
+export function $isVideoNode(node: LexicalNode): boolean {
+  return node instanceof VideoNode;
+}
+
+export const REGISTER_AUTO_NODES = [
+  AutoLinkNode,
+  MentionNode,
+  LinkNode,
+  ImageNode,
+  VideoNode,
+]
+

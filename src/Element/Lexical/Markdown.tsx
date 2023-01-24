@@ -13,6 +13,7 @@ import {
   CHECK_LIST,
   CODE,
   HEADING,
+  LINK,
 } from '@lexical/markdown';
 
 export const editorState = (content: string) => () => {
@@ -30,5 +31,6 @@ export const editorState = (content: string) => () => {
     CHECK_LIST,
     CODE,
     HEADING,
+    LINK,
   ])
 }

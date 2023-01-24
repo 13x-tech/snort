@@ -1,18 +1,19 @@
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
 
-import {PlainTextPlugin} from '@lexical/react/LexicalPlainTextPlugin';
-import {LinkPlugin} from '@lexical/react/LexicalLinkPlugin';
-
-import {ListItemNode, ListNode} from '@lexical/list'
+import {ReactNode} from 'react';
 import {HeadingNode} from '@lexical/rich-text'
+import {ListItemNode, ListNode} from '@lexical/list'
+import CustomHashtagNode from './Lexical/Hashtag';
+
+import {PlainTextPlugin} from '@lexical/react/LexicalPlainTextPlugin';
 import {ContentEditable} from '@lexical/react/LexicalContentEditable';
 import {HashtagPlugin} from '@lexical/react/LexicalHashtagPlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'; 
-import { ReactNode } from 'react';
-
-import {CustomLinkNode, validateUrl} from './Lexical/Link'
-import CustomHashtagNode from './Lexical/Hashtag';
+import {LINK_MATCHERS} from './Lexical/Link'
 import { editorState } from './Lexical/Markdown';
+import AutoEmbedPlugin, { REGISTER_AUTO_NODES } from './Lexical/AutoEmbed';
+import Tag from 'Nostr/Tag';
+import { MetadataCache } from 'Db/User';
 
   // Catch any errors that occur during Lexical updates and log them
   // or throw them as needed. If you don't throw them, Lexical will
@@ -25,10 +26,12 @@ import { editorState } from './Lexical/Markdown';
     children?: ReactNode;
     editable?: boolean;
     className?: string
-    content: string
+    content: string,
+    tags: Tag[],
+    users: Map<string, MetadataCache>
   }
   
-  export default function Editor({ editable, content }:EditorProps) {
+  export default function Editor({ editable, content, tags, users }:EditorProps) {
     const theme = {
     } 
 
@@ -38,7 +41,7 @@ import { editorState } from './Lexical/Markdown';
       onError,
       nodes: [
         ...CustomHashtagNode.nodes(),
-        // ...CustomLinkNode.nodes(),
+        ...REGISTER_AUTO_NODES,
         HeadingNode, ListNode, ListItemNode],
       editable: editable,
       editorState: editorState(content),
@@ -47,11 +50,13 @@ import { editorState } from './Lexical/Markdown';
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
-          {/* <LinkPlugin validateUrl={validateUrl} /> */}
           <PlainTextPlugin
             contentEditable={<ContentEditable className="text" />}
             placeholder={<>...</>}
             ErrorBoundary={LexicalErrorBoundary}
+          />
+          <AutoEmbedPlugin 
+            matchers={LINK_MATCHERS(tags,users)}
           />
           <HashtagPlugin />
         </LexicalComposer>
