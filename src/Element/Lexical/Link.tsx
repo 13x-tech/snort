@@ -1,10 +1,4 @@
-import { UserPreferences } from 'State/Login';
-import { FileExtensionRegex, MentionRegex, SoundCloudRegex, TidalRegex, TweetUrlRegex, UrlRegex, YoutubeUrlRegex } from 'Const';
-import { TwitterTweetEmbed } from 'react-twitter-embed';
-import TidalEmbed from './../TidalEmbed';
-import SoundCloudEmbed from './../SoundCloudEmded';
-import { LinkNode } from '@lexical/link';
-import { Fragment } from 'Element/Text';
+import { FileExtensionRegex } from 'Const';
 import Tag from 'Nostr/Tag';
 import { MetadataCache } from 'Db/User';
 import { hexToBech32 } from 'Util';
@@ -22,13 +16,52 @@ export const LINK_MATCHERS = (tags?: Array<Tag>, users?: Map<string, MetadataCac
       return null;
       }
       const fullMatch = match[0];
-      return {
-      index: match.index,
-      length: fullMatch.length,
-      text: fullMatch,
-      url: fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`,
-      attributes: { rel: 'noopener', target: '_blank' }, 
-      };
+      try {
+        const url = new URL(fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`)
+        const extension = FileExtensionRegex.test(url.pathname.toLowerCase()) && RegExp.$1;
+        switch(extension) {
+          case "gif":
+          case "jpg":
+          case "jpeg":
+          case "png":
+          case "bmp":
+          case "webp": {
+            return {
+              image: true,
+              index: match.index,
+              length: fullMatch.length,
+              text: fullMatch,
+              url: fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`,
+              attributes: { rel: 'noopener', target: '_blank' }, 
+            };
+          }
+          case "mp4":
+          case "mov":
+          case "mkv":
+          case "avi":
+          case "m4v": {
+              return {
+                video: true,
+                index: match.index,
+                length: fullMatch.length,
+                text: fullMatch,
+                url: fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`,
+                attributes: { rel: 'noopener', target: '_blank' }, 
+              };
+          }
+          default: {
+            return {
+              index: match.index,
+              length: fullMatch.length,
+              text: fullMatch,
+              url: fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`,
+              attributes: { rel: 'noopener', target: '_blank' }, 
+            };
+          }
+        }
+      }catch(error) {
+        return null
+      }
   },
   (text:string) => {
     interface response {
@@ -39,7 +72,6 @@ export const LINK_MATCHERS = (tags?: Array<Tag>, users?: Map<string, MetadataCac
     if(match === null) {
         return null;
     }
-    console.log('matchhhh', match)
     const fullMatch = match[0];
 
     let matchMention:response = {
@@ -69,34 +101,3 @@ export const LINK_MATCHERS = (tags?: Array<Tag>, users?: Map<string, MetadataCac
     return matchMention
   }
 ];
-
-export class CustomLinkNode extends LinkNode {
-  url:string;
-  constructor(url:string) {
-    super(url)
-    this.url = url;
-  }
-
-  static nodes() {
-    return [        
-      CustomLinkNode,
-      {
-          replace: LinkNode,
-          with: (node: LinkNode) => {
-              return new CustomLinkNode(node.url);
-          }
-      }]
-  }
-
-  static getType() { return "custom-link";
-  }
-
-  static clone(node: CustomLinkNode) {
-    return new CustomLinkNode(node.url);
-  }
-
-  createDOM(config: any) {
-    console.log('createDOM a element', this)
-    return document.createElement('a')
-  }
-}

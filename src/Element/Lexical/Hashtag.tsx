@@ -1,8 +1,8 @@
 import {HashtagNode} from '@lexical/hashtag'
 import * as utils from '@lexical/utils'
+import { SerializedTextNode } from 'lexical';
 
 export default class CustomHashtagNode extends HashtagNode {
-
   static nodes() {
     return [CustomHashtagNode,
     {
@@ -35,5 +35,15 @@ export default class CustomHashtagNode extends HashtagNode {
 
     utils.addClassNamesToElement(element, config.theme.link);
     return element;
+  }
+
+  static importJSON(serializedNode: SerializedTextNode): CustomHashtagNode {
+    return new CustomHashtagNode(serializedNode.text)
+  }
+
+  exportJSON(): SerializedTextNode {
+    return {
+      text: this.__text,
+    } as SerializedTextNode;
   }
 }

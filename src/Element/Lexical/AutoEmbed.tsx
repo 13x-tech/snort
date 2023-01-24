@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 import {
-  $isAutoLinkNode, $createLinkNode, $createAutoLinkNode, $isLinkNode, LinkNode, AutoLinkNode
+  $isAutoLinkNode, $createLinkNode, $createAutoLinkNode, $isLinkNode, LinkNode, AutoLinkNode, SerializedLinkNode
 } from '@lexical/link';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
@@ -106,67 +106,56 @@ function handleLinkCreation(
         [,linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchStart, invalidMatchEnd + matchStart + matchLength);
       }
 
-      if(match.url) {
-        const url = new URL(match.url)
-        const extension = FileExtensionRegex.test(url.pathname.toLowerCase()) && RegExp.$1;
-        switch (extension) {
-            case "gif":
-            case "jpg":
-            case "jpeg":
-            case "png":
-            case "bmp":
-            case "webp": {
-              linkTextNode.replace($createImageNode(url.toString()))
+      switch(true) {
+        case match.image: {
+          const url = new URL(match.url)
+          linkTextNode.replace($createImageNode(url.toString()))
+          break;
+        }
+        case match.video: {
+          const url = new URL(match.url)
+          linkTextNode.replace($createVideoNode(url.toString()))
+          break;
+        }
+        case match.key: {
+          switch(match.key) {
+            case "p": {
+              console.log(`mention: ${match.pubKey}`)
+              linkTextNode.replace($createMentionNode(match.pubKey))
               break;
             }
-            case "mp4":
-            case "mov":
-            case "mkv":
-            case "avi":
-            case "m4v": {
-                linkTextNode.replace($createVideoNode(url.toString()))
-                break;
-            }
-            default:
-              const textNode = lexical.$createTextNode(match.text);
-              const linkNode = $createAutoLinkNode(match.url, match.attributes);
+            case "e": {
+              const textNode = lexical.$createTextNode(match.eText);
+              const linkNode = $createAutoLinkNode(`/note/${match.Event}`, match.attributes);
               textNode.setFormat(linkTextNode.getFormat());
               textNode.setDetail(linkTextNode.getDetail());
               linkNode.append(textNode);
               linkTextNode.replace(linkNode);
+              break;
+            }
+            case "t": {
+              const textNode = lexical.$createTextNode(match.Hashtag);
+              const linkNode = $createAutoLinkNode(`/t/${match.Event}`, match.attributes);
+              textNode.setFormat(linkTextNode.getFormat());
+              textNode.setDetail(linkTextNode.getDetail());
+              linkNode.append(textNode);
+              linkTextNode.replace(linkNode);
+              break
+            }
+            default:
+              linkTextNode.replace(lexical.$createTextNode(match.text)) 
+          }
+          break;
         }
-      } else if(match.key) {
-        switch(match.key) {
-          case "p": {
-            linkTextNode.replace(new MentionNode(match.pubKey))
-            break;
-          }
-          case "e": {
-            const textNode = lexical.$createTextNode(match.eText);
-            const linkNode = $createAutoLinkNode(`/note/${match.Event}`, match.attributes);
-            textNode.setFormat(linkTextNode.getFormat());
-            textNode.setDetail(linkTextNode.getDetail());
-            linkNode.append(textNode);
-            linkTextNode.replace(linkNode);
-            break;
-          }
-          case "t": {
-            const textNode = lexical.$createTextNode(match.Hashtag);
-            const linkNode = $createAutoLinkNode(`/t/${match.Event}`, match.attributes);
-            textNode.setFormat(linkTextNode.getFormat());
-            textNode.setDetail(linkTextNode.getDetail());
-            linkNode.append(textNode);
-            linkTextNode.replace(linkNode);
-            break
-          }
-          default:
-            linkTextNode.replace(lexical.$createTextNode(match.text))
-        }
-      } else {
-        console.log('match fuck', match)
-        linkTextNode.replace(lexical.$createTextNode(match.text))
-      } 
-
+        default:
+          const textNode = lexical.$createTextNode(match.text);
+          const linkNode = $createAutoLinkNode(match.url, match.attributes);
+          textNode.setFormat(linkTextNode.getFormat());
+          textNode.setDetail(linkTextNode.getDetail());
+          linkNode.append(textNode);
+          linkTextNode.replace(linkNode);
+          break
+      }
       invalidMatchEnd = 0;
     } else {
       invalidMatchEnd += matchEnd;
@@ -317,6 +306,17 @@ export class VideoNode extends lexical.DecoratorNode<react.ReactNode> {
   decorate(): react.ReactNode {
     return  <video key={this.__id} src={this.__id} controls />
   }
+
+  static importJSON(serializedNode: SerializedLinkNode): VideoNode {
+    return new VideoNode(serializedNode.url)
+  }
+
+  exportJSON(): SerializedLinkNode {
+    return {
+      url: this.__id,
+    } as SerializedLinkNode;
+  }
+
 }
 
 export class MentionNode extends lexical.DecoratorNode<react.ReactNode> {
@@ -346,7 +346,21 @@ export class MentionNode extends lexical.DecoratorNode<react.ReactNode> {
   decorate(): react.ReactNode {
     return  <Mention pubkey={this.__pubKey} />
   }
+
+  static importJSON(serializedNode: SerializedMentionNode): MentionNode {
+    return new MentionNode(serializedNode.pubKey)
+  }
+
+  exportJSON(): SerializedMentionNode {
+    return {
+      pubKey: this.__pubKey,
+    } as SerializedMentionNode;
+  }
 }
+
+export declare type SerializedMentionNode = lexical.Spread<{
+  type: 'link';
+}, lexical.Spread<{pubKey: string}, lexical.SerializedElementNode>>;
 
 export class ImageNode extends lexical.DecoratorNode<react.ReactNode> {
   __id: string;
@@ -375,6 +389,16 @@ export class ImageNode extends lexical.DecoratorNode<react.ReactNode> {
   decorate(): react.ReactNode {
     return  <img key={this.__id} src={this.__id} />;
   }
+
+  static importJSON(serializedNode: SerializedLinkNode): ImageNode {
+    return new ImageNode(serializedNode.url)
+  }
+
+  exportJSON(): SerializedLinkNode {
+    return {
+      url: this.__id,
+    } as SerializedLinkNode;
+  }
 }
 
 export function $createImageNode(id: string): ImageNode {
@@ -391,6 +415,10 @@ export function $createVideoNode(id: string): VideoNode {
 
 export function $isVideoNode(node: LexicalNode): boolean {
   return node instanceof VideoNode;
+}
+
+export function $createMentionNode(pubKey: string): MentionNode {
+  return new MentionNode(pubKey);
 }
 
 export const REGISTER_AUTO_NODES = [
