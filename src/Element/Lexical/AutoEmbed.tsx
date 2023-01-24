@@ -13,8 +13,6 @@ import * as lexical from 'lexical';
 import {LexicalNode} from 'lexical'
 import * as react from 'react';
 import { FileExtensionRegex } from 'Const';
-import Tag from 'Nostr/Tag';
-import { MetadataCache } from 'Db/User';
 import Mention from 'Element/Mention';
 
 
