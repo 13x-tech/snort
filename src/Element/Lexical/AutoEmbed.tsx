@@ -12,8 +12,8 @@ import {mergeRegister} from '@lexical/utils';
 import * as lexical from 'lexical';
 import {LexicalNode} from 'lexical'
 import * as react from 'react';
-import { ImageNode } from './Image';
-import { VideoNode } from './Video';
+import { $createImageNode, ImageNode } from './Image';
+import { $createVideoNode, VideoNode } from './Video';
 import { $createMentionNode, MentionNode } from './Mention';
 
 

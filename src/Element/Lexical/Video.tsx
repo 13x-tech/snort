@@ -2,28 +2,28 @@ import { DecoratorNode, LexicalNode, NodeKey, SerializedElementNode, Spread } fr
 import { ReactNode } from "react";
 
 export interface VideoNodeProps {
-  controls: boolean;
-  crossorigin?: crossorigin; 
+  controls?: boolean;
+  // crossorigin?: crossorigin; 
   height?: number;
   width?: number;
   loop?: boolean;
   muted?: boolean;
   playsinline?: boolean;
   poster?: string;
-  preload?: preload;
+  // preload?: preload;
 }
 
-enum crossorigin {
-  "anonymous",
-  "use-credentials"
-}
+// enum crossorigin {
+//   "anonymous",
+//   "use-credentials"
+// }
 
-enum preload {
-  "none",
-  "metadata",
-  "auto",
-  ""
-}
+// enum preload {
+//   "none",
+//   "metadata",
+//   "auto",
+//   ""
+// }
 
 export class VideoNode extends DecoratorNode<ReactNode> {
   __src: string;
@@ -55,6 +55,7 @@ export class VideoNode extends DecoratorNode<ReactNode> {
     return  <video 
       key={this.__key}
       src={this.__src}
+      controls={this.__videoProps?.controls}
     />
   }
 
@@ -75,8 +76,8 @@ export declare type SerializedVideoNode = Spread<{
   type: 'video';
 }, Spread<{src: string, videoProps?: VideoNodeProps, key?: string}, SerializedElementNode>>;
 
-export function $createVideoNode(id: string): VideoNode {
-  return new VideoNode(id);
+export function $createVideoNode(src: string, props?: VideoNodeProps, key?: string): VideoNode {
+  return new VideoNode(src, props, key);
 }
 
 export function $isVideoNode(node: LexicalNode): boolean {
