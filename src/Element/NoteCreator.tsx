@@ -35,7 +35,6 @@ export function NoteCreator(props: NoteCreatorProps) {
     const [active, setActive] = useState<boolean>(false);
     const pref = useSelector<RootState, UserPreferences>(s => s.login.preferences);
 
-
     async function sendNote() {
         if (note) {
             let ev = props.replyTo ? await publisher.reply(props.replyTo, note) : await publisher.note(note);
@@ -110,7 +109,9 @@ export function NoteCreator(props: NoteCreatorProps) {
                         onChange={onChange}
                         content={note || ''}
                         autoFocus={props.autoFocus}
-                        onFocus={() => setActive(true)}
+                        onFocus={() => {
+                            setActive(true)
+                        }}
                         className={`textarea ${active ? "textarea--focused" : ""}`}
                         tags={tags}
                         users={users}

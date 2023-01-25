@@ -1,12 +1,13 @@
 import "./Lexical.css";
 
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
-import {ReactNode} from 'react';
+import {ReactNode, useEffect, useMemo} from 'react';
 import {HeadingNode} from '@lexical/rich-text'
 import {ListItemNode, ListNode} from '@lexical/list'
 import CustomHashtagNode from './Lexical/Hashtag';
 
 import {PlainTextPlugin} from '@lexical/react/LexicalPlainTextPlugin';
+import {MarkdownShortcutPlugin} from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import {HistoryPlugin} from '@lexical/react/LexicalHistoryPlugin';
 import {ContentEditable} from '@lexical/react/LexicalContentEditable';
 import {HashtagPlugin} from '@lexical/react/LexicalHashtagPlugin';
@@ -15,7 +16,10 @@ import { editorState } from './Lexical/Markdown';
 import AutoEmbedPlugin, { REGISTER_AUTO_NODES } from './Lexical/AutoEmbed';
 import Tag from 'Nostr/Tag';
 import { MetadataCache } from 'Db/User';
-import { FileExtensionRegex, UrlRegex } from 'Const';
+import { FileExtensionRegex, MentionRegex, UrlRegex } from 'Const';
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { BLUR_COMMAND, COMMAND_PRIORITY_LOW, FOCUS_COMMAND } from "lexical";
+import { TRANSFORMERS } from "@lexical/markdown";
 
   // Catch any errors that occur during Lexical updates and log them
   // or throw them as needed. If you don't throw them, Lexical will
@@ -36,7 +40,7 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
     users: Map<string, MetadataCache>
   }
 
-  export default function Editor({ editable, content, tags, users, className }:EditorProps) {
+  export default function Editor({ editable, content, tags, users, className, onFocus }:EditorProps) {
 
     const initialConfig = {
       namespace: 'SnortEditor',
@@ -52,15 +56,24 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
       editorState: editorState(content),
     };
 
+    const matchers = useMemo(() => {
+      if(!editable) return LINK_MATCHERS
+      return [
+        ...LINK_MATCHERS,
+        ...EDITABLE_MATCHERS
+      ]
+    },[editable])
+
     return (
       <span className={editable ? 'rta ' + className : className}>
         <LexicalComposer initialConfig={initialConfig}>
           <HistoryPlugin />
-          {/* <HashtagPlugin /> */}
+          <HashtagPlugin />
           <AutoEmbedPlugin 
+            onFocus={onFocus}
             tags={tags}
             users={users}
-            matchers={LINK_MATCHERS}
+            matchers={matchers}
           />
           <PlainTextPlugin
             contentEditable={<ContentEditable className="textarea" />}
@@ -72,6 +85,21 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
     );
   }
 
+  const EDITABLE_MATCHERS = [
+    (text:string) => {
+      const match = /(?<=)@[a-zA-Z0-9_]+/.exec(text);
+      if (match === null) return match;
+
+      const fullMatch = match[0];
+      return {
+        mention: true,
+        index: match.index,
+        length: fullMatch.length,
+        text: fullMatch, 
+      }
+    }
+  ]
+
   export const LINK_MATCHERS = [
     // Url Match
     (text:string) => {
@@ -79,9 +107,8 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
         /(?:[a-z]+:)?\/\/[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,12}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
         const match = URL_MATCHER.exec(text);
-        if (match === null) {
-        return null;
-        }
+        if (match === null) return match
+
         const fullMatch = match[0];
         console.log('full Match', text)
         try {
@@ -134,9 +161,8 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
     //Ref Match
     (text:string) => {
       const match = text.match(/#\[(\d+)\]/);
-      if(match === null) {
-          return null;
-      }
+      if (match === null) return match
+      
       const fullMatch = match[0];
       return {
           index: match.index,
@@ -144,6 +170,6 @@ import { FileExtensionRegex, UrlRegex } from 'Const';
           text: fullMatch,
           tagRefId: parseInt(match[1])
       }
-    }
+    },
   ];
   

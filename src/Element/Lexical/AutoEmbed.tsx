@@ -18,6 +18,7 @@ import { $createMentionNode, MentionNode } from './Mention';
 import Tag from 'Nostr/Tag';
 import { MetadataCache } from 'Db/User';
 import { hexToBech32 } from 'Util';
+import { registerMarkdown } from './Markdown';
 
 
 /**
@@ -113,6 +114,15 @@ function handleLinkCreation(
         [,linkTextNode, remainingTextNode] = remainingTextNode.splitText(invalidMatchEnd + matchStart, invalidMatchEnd + matchStart + matchLength);
       }
       switch(isValid) {
+        case match.mention: {
+          const textNode = lexical.$createTextNode(match.text);
+          const linkNode = $createLinkNode(`#${match.text}`, match.attributes);
+          textNode.setFormat(linkTextNode.getFormat());
+          textNode.setDetail(linkTextNode.getDetail());
+          linkNode.append(textNode);
+          linkTextNode.replace(linkNode);
+          break
+        }
         case match.image: {
           const url = new URL(match.url)
           if(isEditable) {
@@ -288,16 +298,37 @@ const process = (editor: lexical.LexicalEditor,  matchers: Array<(text:string)=>
 }
 
 interface AutoEmbed{
+  onFocus?: (ev:any) => void;
   matchers: Array<(text:string)=>any>,
   tags: Array<Tag>,
   users: Map<string, MetadataCache>,
 }
 
-function AutoEmbed({ matchers, tags, users }: AutoEmbed):null {
+function AutoEmbed({ matchers, tags, users, onFocus }: AutoEmbed):null {
   const [editor] = useLexicalComposerContext();
+  
   useEffect(() => {
     process(editor, matchers, tags, users);
   },[matchers,tags,users])
+
+  useEffect(() => editor.registerCommand(
+    lexical.BLUR_COMMAND,
+    () => false,
+    lexical.COMMAND_PRIORITY_LOW
+  ),[])
+
+
+  useEffect(() => editor.registerCommand(
+    lexical.FOCUS_COMMAND,
+    () => {
+      if(onFocus) {
+        onFocus(true)
+      }
+      return false
+    },
+    lexical.COMMAND_PRIORITY_LOW
+  ),[])
+
   return null;
 }
 
