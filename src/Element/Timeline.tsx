@@ -53,7 +53,7 @@ export default function Timeline({ subject, postsOnly = false, method }: Timelin
     }
 
     return (
-        <>
+        <div className="main-content">
             {latestFeed.length > 1 && (<div className="card latest-notes pointer" onClick={() => showLatest()}>
                 <FontAwesomeIcon icon={faForward}  size="xl"/>
                 &nbsp;
@@ -61,6 +61,6 @@ export default function Timeline({ subject, postsOnly = false, method }: Timelin
             </div>)}
             {mainFeed.map(eventElement)}
             <LoadMore onLoadMore={loadMore} shouldLoadMore={main.end}/>
-        </>
+        </div>
     );
 }

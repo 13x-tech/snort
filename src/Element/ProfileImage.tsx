@@ -30,13 +30,18 @@ export default function ProfileImage({ pubkey, subHeader, showUsername = true, c
             <div className="avatar-wrapper">
                 <Avatar user={user} onClick={() => navigate(link ?? profileLink(pubkey))} />
             </div>
-            {showUsername && (<div className="f-grow pointer" onClick={e => { e.stopPropagation(); navigate(link ?? profileLink(pubkey)) }}>
-                <div className="profile-name">
-                    <div>{name}</div>
-                    {user?.nip05 && <Nip05 nip05={user.nip05} pubkey={user.pubkey} />}
+            {showUsername && (
+              <div className="profile-name f-grow">
+                <div className="username">
+                  <Link className="display-name" key={pubkey} to={link ?? profileLink(pubkey)}>
+                    {name}
+                  </Link>
+                  {user?.nip05 && <Nip05 nip05={user.nip05} pubkey={user.pubkey} />}
                 </div>
-                {subHeader ? <>{subHeader}</> : null}
-            </div>
+                <div className="subheader">
+                  {subHeader}
+                </div>
+              </div>
             )}
         </div>
     )

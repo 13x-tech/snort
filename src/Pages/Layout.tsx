@@ -1,9 +1,11 @@
 import "./Layout.css";
-import { useEffect, useMemo } from "react"
+import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router-dom";
-import { faBell, faMessage, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Envelope from "Icons/Envelope"
+import Bell from "Icons/Bell"
 
 import { RootState } from "State/Store";
 import { init, UserPreferences } from "State/Login";
@@ -91,21 +93,17 @@ export default function Layout() {
         const unreadNotifications = notifications?.filter(a => (a.created_at * 1000) > readNotifications).length;
         const unreadDms = key ? totalUnread(dms, key) : 0;
         return (
-            <>
+            <div className="header-actions">
                 <div className={`btn btn-rnd${unreadDms === 0 ? " mr10" : ""}`} onClick={(e) => navigate("/messages")}>
-                    <FontAwesomeIcon icon={faMessage} size="xl" />
+                    <Envelope />
+                    {unreadDms > 0 && (<span className="has-unread"></span>)}
                 </div>
-                {unreadDms > 0 && (<span className="unread-count">
-                    {unreadDms > 100 ? ">99" : unreadDms}
-                </span>)}
                 <div className={`btn btn-rnd${unreadNotifications === 0 ? " mr10" : ""}`} onClick={(e) => goToNotifications(e)}>
-                    <FontAwesomeIcon icon={faBell} size="xl" />
+                    <Bell />
+                    {unreadNotifications > 0 && (<span className="has-unreads"></span>)}
                 </div>
-                {unreadNotifications > 0 && (<span className="unread-count">
-                    {unreadNotifications > 100 ? ">99" : unreadNotifications}
-                </span>)}
                 <ProfileImage pubkey={key || ""} showUsername={false} />
-            </>
+            </div>
         )
     }
 
@@ -114,17 +112,17 @@ export default function Layout() {
     }
     return (
         <div className="page">
-            <div className="header">
-                <div className="logo" onClick={() => navigate("/")}>snort</div>
+            <header>
+                <div className="logo" onClick={() => navigate("/")}>Snort</div>
                 <div>
                     <div className={`btn btn-rnd mr10`} onClick={(e) => navigate("/search")}>
                         <FontAwesomeIcon icon={faSearch} size="xl" />
                     </div>
                     {key ? accountHeader() :
-                        <div className="btn" onClick={() => navigate("/login")}>Login</div>
+                        <button type="button" onClick={() => navigate("/login")}>Login</button>
                     }
                 </div>
-            </div>
+            </header>
 
             <Outlet />
         </div>
