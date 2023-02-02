@@ -1,10 +1,11 @@
 import "./Lexical.css";
 
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
-import {ReactNode, useEffect, useMemo} from 'react';
+import {ReactNode, useEffect, useMemo, useState} from 'react';
 import {HeadingNode} from '@lexical/rich-text'
 import {ListItemNode, ListNode} from '@lexical/list'
 import CustomHashtagNode from './Lexical/Hashtag';
+import { db } from "Db";
 
 import {PlainTextPlugin} from '@lexical/react/LexicalPlainTextPlugin';
 import {MarkdownShortcutPlugin} from '@lexical/react/LexicalMarkdownShortcutPlugin';
@@ -20,6 +21,7 @@ import { FileExtensionRegex, MentionRegex, UrlRegex } from 'Const';
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { BLUR_COMMAND, COMMAND_PRIORITY_LOW, FOCUS_COMMAND } from "lexical";
 import { TRANSFORMERS } from "@lexical/markdown";
+import { useLiveQuery } from "dexie-react-hooks";
 
   // Catch any errors that occur during Lexical updates and log them
   // or throw them as needed. If you don't throw them, Lexical will
@@ -40,7 +42,7 @@ import { TRANSFORMERS } from "@lexical/markdown";
     users: Map<string, MetadataCache>
   }
 
-  export default function Editor({ editable, content, tags, users, className, onFocus }:EditorProps) {
+  export default function Editor({ editable, content, tags, className, onFocus, onChange }:EditorProps) {
 
     const initialConfig = {
       namespace: 'SnortEditor',
@@ -67,12 +69,11 @@ import { TRANSFORMERS } from "@lexical/markdown";
     return (
       <span className={editable ? 'rta ' + className : className}>
         <LexicalComposer initialConfig={initialConfig}>
-          <HistoryPlugin />
-          <HashtagPlugin />
+          {/* <HistoryPlugin /> */}
+          {/* <HashtagPlugin /> */}
           <AutoEmbedPlugin 
             onFocus={onFocus}
             tags={tags}
-            users={users}
             matchers={matchers}
           />
           <PlainTextPlugin
@@ -107,11 +108,10 @@ import { TRANSFORMERS } from "@lexical/markdown";
         /(?:[a-z]+:)?\/\/[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,12}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
         const match = URL_MATCHER.exec(text);
-        if (match === null) return match
+        if (match === null) return null;
 
-        const fullMatch = match[0];
-        console.log('full Match', text)
         try {
+          const fullMatch = match[0];
           const url = new URL(fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`)
           const extension = FileExtensionRegex.test(url.pathname.toLowerCase()) && RegExp.$1;
           switch(extension) {
@@ -155,6 +155,7 @@ import { TRANSFORMERS } from "@lexical/markdown";
             }
           }
         }catch(error) {
+          console.error('matcher error', error)
           return null
         }
     },

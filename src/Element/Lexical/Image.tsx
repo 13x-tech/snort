@@ -75,8 +75,25 @@ export function $createEditableImageNode(src: string, alt?: string, className?: 
 
 export class EditableImageNode extends ImageNode {
 
+  static getType(): string {
+    return 'edit-img';
+  } 
+
   static clone(node: EditableImageNode): EditableImageNode {
     return new EditableImageNode(node.__src, node.__alt, node.__className, node.__key)
+  }
+
+  static importJSON(serialized: SerializedImageNode): EditableImageNode {
+    return new EditableImageNode(serialized.src, serialized.alt, serialized.className, serialized.key)
+  }
+
+  exportJSON(): SerializedImageNode{
+    return {
+      src: this.__src,
+      alt: this.__alt,
+      className: this.__className,
+      key: this.__key,
+    } as SerializedImageNode;
   }
 
   decorate(): ReactNode {

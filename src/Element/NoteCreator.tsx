@@ -91,9 +91,7 @@ export function NoteCreator(props: NoteCreatorProps) {
     }
 
     const tags = new Array<Tag>();
-    const users = new Map();
 
-    if (!props.show) return null;
     return (
         <>
         <button className="note-create-button" type="button" onClick={() => setShow(!show)}>
@@ -109,12 +107,10 @@ export function NoteCreator(props: NoteCreatorProps) {
                         onChange={onChange}
                         content={note || ''}
                         autoFocus={props.autoFocus}
-                        onFocus={() => {
-                            setActive(true)
-                        }}
+                        onFocus={() => setActive(true)}
                         className={`textarea ${active ? "textarea--focused" : ""}`}
                         tags={tags}
-                        users={users}
+                        users={new Map()}
                         />
                     ) || (
                         <Textarea

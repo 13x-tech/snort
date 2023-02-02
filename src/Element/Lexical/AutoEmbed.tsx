@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import {useEffect} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import * as lexical from 'lexical';
 
 import {
@@ -14,11 +14,15 @@ import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
 import { $createEditableImageNode, $createImageNode, EditableImageNode, ImageNode } from './Image';
 import { $createVideoNode, VideoNode } from './Video';
-import { $createMentionNode, MentionNode } from './Mention';
+import { $createEditMentionNode, $createMentionNode, EditMentionNode, MentionNode } from './Mention';
 import Tag from 'Nostr/Tag';
 import { MetadataCache } from 'Db/User';
 import { hexToBech32 } from 'Util';
 import { registerMarkdown } from './Markdown';
+import { stringify } from 'querystring';
+import { is } from 'immer/dist/internal';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from 'Db';
 
 
 /**
@@ -90,14 +94,17 @@ function handleLinkCreation(
   node: lexical.LexicalNode,
   matchers: Array<(text:string)=> any>,
   tags: Array<Tag>,
-  users: Map<string, MetadataCache>,
-  isEditable: boolean
+  isEditable: boolean,
+  query?: (text:string) => void,
+  users?: Array<MetadataCache>,
 ) {
   const nodeText = node.getTextContent();
   let text = nodeText;
   let invalidMatchEnd = 0;
   let remainingTextNode = node;
   let match;
+  
+  let somethinghere = ''
 
   while ((match = findFirstMatch(text, matchers)) && match !== null) {
     const matchStart = match.index;
@@ -115,17 +122,26 @@ function handleLinkCreation(
       }
       switch(isValid) {
         case match.mention: {
-          const textNode = lexical.$createTextNode(match.text);
-          const linkNode = $createLinkNode(`#${match.text}`, match.attributes);
-          textNode.setFormat(linkTextNode.getFormat());
-          textNode.setDetail(linkTextNode.getDetail());
-          linkNode.append(textNode);
-          linkTextNode.replace(linkNode);
+          if(isEditable && match.text) {
+            if(query) query(match.text)
+            const textNode = lexical.$createTextNode(match.text);
+            const usersText = `[ ${users?.map(u => u.name).join(', ')} ]`
+            console.log('remaining text node', remainingTextNode)
+            console.log('somethinghere', somethinghere)
+            somethinghere = usersText
+            const linkNode = $createLinkNode(`/#${match.text.slice(1)}`, match.attributes);
+            textNode.setFormat(linkTextNode.getFormat());
+            textNode.setDetail(linkTextNode.getDetail());
+            linkNode.append(textNode);
+            linkTextNode.replace(linkNode);
+          } else {
+            linkTextNode.replace(lexical.$createTextNode(match.text))
+          }
           break
         }
         case match.image: {
           const url = new URL(match.url)
-          if(isEditable) {
+          if(isEditable === true) {
             linkTextNode.replace($createEditableImageNode(url.toString()))
           } else {
             linkTextNode.replace($createImageNode(url.toString()))
@@ -275,41 +291,52 @@ function replaceWithChildren(node: lexical.ElementNode) {
   return children.map(child => child.getLatest());
 }
 
-const process = (editor: lexical.LexicalEditor,  matchers: Array<(text:string)=> any>, tags: Array<Tag>, users: Map<string, MetadataCache>) => {
-  if (!editor.hasNodes([LinkNode])) {
-    {
-      throw Error(`AutoEmbed: LinkNode not registered on editor`);
-    }
-  }
-
-  return mergeRegister(editor.registerNodeTransform(lexical.TextNode, textNode => {
-    const parent = textNode.getParentOrThrow<LinkNode>();
-
-    if ($isLinkNode(parent)) {
-      handleLinkEdit(parent, matchers);
-    } else if (!$isLinkNode(parent)) {
-      if (textNode.isSimpleText()) {
-        handleLinkCreation(textNode, matchers, tags, users, editor.isEditable());
-      }
-
-      handleBadNeighbors(textNode);
-    }
-  }));
-}
-
 interface AutoEmbed{
   onFocus?: (ev:any) => void;
   matchers: Array<(text:string)=>any>,
   tags: Array<Tag>,
-  users: Map<string, MetadataCache>,
 }
 
-function AutoEmbed({ matchers, tags, users, onFocus }: AutoEmbed):null {
+function AutoEmbed({ matchers, tags, onFocus }: AutoEmbed):null {
+  const [query,setQuery] = useState('')
   const [editor] = useLexicalComposerContext();
+
+  // Todo, register other nodes or handle them differently
+  if (!editor.hasNodes([LinkNode])) {
+    throw Error(`AutoEmbed: LinkNode not registered on editor`);
+  }
+
+  const users = useLiveQuery(
+    async () => {
+      return await db.users
+        .where("npub").startsWithIgnoreCase(query)
+        .or("name").startsWithIgnoreCase(query)
+        .or("display_name").startsWithIgnoreCase(query)
+        .or("nip05").startsWithIgnoreCase(query)
+        .limit(5)
+        .toArray()
+    }, [query]);
+
+  const registerNodeTransform = (
+    matchers: Array<(text:string)=>any>,
+    tags: Array<Tag>,
+    users?: MetadataCache[],
+  ) => editor.registerNodeTransform(lexical.TextNode, textNode => {
+    console.log('called here', users)
+      const parent = textNode.getParentOrThrow<LinkNode>();
   
-  useEffect(() => {
-    process(editor, matchers, tags, users);
-  },[matchers,tags,users])
+      if ($isLinkNode(parent)) {
+        handleLinkEdit(parent, matchers);
+      } else if (!$isLinkNode(parent)) {
+        if (textNode.isSimpleText()) {
+          handleLinkCreation(textNode, matchers, tags, editor.isEditable(), setQuery, users);
+        }
+  
+        handleBadNeighbors(textNode);
+      }
+    })
+
+  useEffect(() => mergeRegister(registerNodeTransform(matchers, tags, users)),[ matchers, tags, users])
 
   useEffect(() => editor.registerCommand(
     lexical.BLUR_COMMAND,
@@ -327,7 +354,7 @@ function AutoEmbed({ matchers, tags, users, onFocus }: AutoEmbed):null {
       return false
     },
     lexical.COMMAND_PRIORITY_LOW
-  ),[])
+  ),[onFocus])
 
   return null;
 }
@@ -336,6 +363,7 @@ export default AutoEmbed;
 
 export const REGISTER_AUTO_NODES = [
   MentionNode,
+  EditMentionNode,
   LinkNode,
   ImageNode,
   EditableImageNode,
