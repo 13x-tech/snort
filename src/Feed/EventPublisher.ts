@@ -10,6 +10,7 @@ import { HexKey, RawEvent, u256, UserMetadata, Lists } from "Nostr";
 import { bech32ToHex, unwrap } from "Util";
 import { DefaultRelays, HashtagRegex } from "Const";
 import { RelaySettings } from "Nostr/Connection";
+import { useNip13 } from "Nip13/Nip13";
 
 declare global {
   interface Window {
@@ -30,6 +31,7 @@ export default function useEventPublisher() {
   const privKey = useSelector<RootState, HexKey | undefined>(s => s.login.privateKey);
   const follows = useSelector<RootState, HexKey[]>(s => s.login.follows);
   const relays = useSelector((s: RootState) => s.login.relays);
+  const nip13 = useNip13();
   const hasNip07 = "nostr" in window;
 
   async function signEvent(ev: NEvent): Promise<NEvent> {
@@ -81,6 +83,11 @@ export default function useEventPublisher() {
   }
 
   return {
+    work: async (difficulty: number, event: NEvent) => {
+      nip13.pow(difficulty, event, async ev => {
+        System.BroadcastEvent(await signEvent(ev));
+      });
+    },
     nip42Auth: async (challenge: string, relay: string) => {
       if (pubKey) {
         const ev = NEvent.ForPubKey(pubKey);

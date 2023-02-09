@@ -89,4 +89,7 @@ export default defineMessages({
   GoTo: "Go to",
   FindMore: "Find out more info about {service} at {link}",
   SavePassword: "Please make sure to save the following password in order to manage your handle in the future",
+  SelectDifficulty: "Select Difficulty",
+  Default: "(Default)",
+  None: "None"
 });

@@ -157,6 +157,7 @@
   "Pages.settings.Relays": "Relays",
   "Pages.settings.Remove": "Remove",
   "Pages.settings.Save": "Save",
+  "Pages.settings.SelectDifficulty": "Select Difficulty",
   "Pages.settings.ServiceKey": "Service Key",
   "Pages.settings.ServiceSalt": "Service Salt",
   "Pages.settings.ServiceUrl": "Service URL",

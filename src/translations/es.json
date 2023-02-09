@@ -157,6 +157,7 @@
   "Pages.settings.Relays": "Relays",
   "Pages.settings.Remove": "Eliminar",
   "Pages.settings.Save": "Guardar",
+  "Pages.settings.SelectDifficulty": "",
   "Pages.settings.ServiceKey": "Clave del Servicio",
   "Pages.settings.ServiceSalt": "Salt del Servicio",
   "Pages.settings.ServiceUrl": "URL del Servicio",

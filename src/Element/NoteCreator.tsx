@@ -12,6 +12,11 @@ import { default as NEvent } from "Nostr/Event";
 import useFileUpload from "Upload";
 
 import messages from "./messages";
+import { useSelector } from "react-redux";
+import { RootState } from "State/Store";
+import { UserPreferences } from "State/Login";
+import { faPersonDigging } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 interface NotePreviewProps {
   note: NEvent;
@@ -43,19 +48,31 @@ export function NoteCreator(props: NoteCreatorProps) {
   const [note, setNote] = useState<string>("");
   const [error, setError] = useState<string>();
   const [active, setActive] = useState<boolean>(false);
+  const [difficulty, setDifficulty] = useState<number>(0);
+  const [showDifficultySelector, setShowDifficultySelector] = useState<boolean>(false);
+  const pref = useSelector<RootState, UserPreferences>(s => s.login.preferences);
   const uploader = useFileUpload();
   const hasErrors = (error?.length ?? 0) > 0;
 
   async function sendNote() {
     if (note) {
       const ev = replyTo ? await publisher.reply(replyTo, note) : await publisher.note(note);
-      console.debug("Sending note: ", ev);
-      publisher.broadcast(ev);
+      if (ev && difficulty > 0) {
+        await publisher.work(difficulty, ev)
+      } else {
+        console.debug("Sending note: ", ev);
+        publisher.broadcast(ev);
+      }
+
       setNote("");
       setShow(false);
-      if (typeof onSend === "function") {
-        onSend();
+
+      if (difficulty > 0) {
+        if (typeof onSend === "function") {
+          onSend();
+        }
       }
+
       setActive(false);
     }
   }
@@ -112,6 +129,33 @@ export function NoteCreator(props: NoteCreatorProps) {
                 value={note}
                 onFocus={() => setActive(true)}
               />
+              {pref.nip13Engine !== "none" && (
+                <div className="flex">
+                  <button type="button" className="proof-of-work" onClick={() => setShowDifficultySelector(!showDifficultySelector)}>
+                    <FontAwesomeIcon icon={faPersonDigging} /> {difficulty && difficulty > 0 ? <>{difficulty}</> : null}
+                  </button>
+                  {showDifficultySelector && (
+                    <div className="difficulty-selector">
+                      <div className="flex f-col difficulty-selector-float">
+                        <span className="selector-title"><FormattedMessage {...messages.SelectDifficulty} /> </span>
+                        <select value={difficulty} onChange={e => {
+                          setDifficulty(parseInt(e.target.value))
+                          setShowDifficultySelector(false)
+                        }
+                        }>
+                          <option value={0}><FormattedMessage {...messages.None} /> <FormattedMessage {...messages.Default} /></option>
+                          <option value={12}>12 (3 zeros)</option>
+                          <option value={16}>16 (4 zeros)</option>
+                          <option value={20}>20 (5 zeros)</option>
+                          <option value={24}>24 (6 zeros)</option>
+                          <option value={28}>28 (7 zeros)</option>
+                          <option value={32}>32 (8 zeros)</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <button type="button" className="attachment" onClick={attachFile}>
                 <Attachment />
               </button>

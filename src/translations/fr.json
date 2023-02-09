@@ -157,6 +157,7 @@
   "Pages.settings.Relays": "Relais",
   "Pages.settings.Remove": "Retirer",
   "Pages.settings.Save": "Sauvegarder",
+  "Pages.settings.SelectDifficulty": "",
   "Pages.settings.ServiceKey": "Clé de service",
   "Pages.settings.ServiceSalt": "Sel de service",
   "Pages.settings.ServiceUrl": "URL de service",

@@ -17,12 +17,16 @@ export function useNip13() {
       case "javascript":
         return _JavascriptPoW();
       default:
-        throw Error(`unsupported nip13 engine: ${pref.nip13Engine}`);
+        return
     }
   }, [pref.nip13Engine]);
 
   return {
     pow: async (difficulty: number, ev: Event, onComplete: (ev: Event) => Promise<void>) => {
+      if(!worker) {
+        throw Error('worker not defined in preferences')
+      }
+
       const pendingId = await ev.CreateId();
 
       dispatch(
@@ -59,7 +63,7 @@ export function useNip13() {
         worker.terminate();
       };
 
-      worker.onmessageerror = (ev: MessageEvent) => {
+      worker.onmessageerror = () => {
         dispatch(setFailed({ id: pendingId, message: "invalid" }));
         worker.terminate();
       };
@@ -78,7 +82,7 @@ export function useNip13() {
 
 //TODO: build these.
 const _WASMPoW = (): Worker => {
-  return new Worker(new URL("./Workers/Nip13/Nip13.ts"));
+  return new Worker(new URL("../Workers/Nip13/WASM_Go.ts", import.meta.url));
 };
 
 const _JavascriptPoW = (): Worker => {
