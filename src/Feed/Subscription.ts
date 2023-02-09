@@ -4,6 +4,8 @@ import { TaggedRawEvent } from "Nostr";
 import { Subscriptions } from "Nostr/Subscriptions";
 import { debounce, unwrap } from "Util";
 import { db } from "Db";
+import { hexToBytes } from "@noble/hashes/utils";
+import { checkDifficulty } from "Nip13/Nip13";
 
 export type NoteStore = {
   notes: Array<TaggedRawEvent>;
@@ -19,6 +21,11 @@ interface ReducerArg {
   type: "END" | "EVENT" | "CLEAR";
   ev?: TaggedRawEvent | TaggedRawEvent[];
   end?: boolean;
+  minDifficulty?: number;
+}
+
+const extractDifficulty = (tags: string[][]): number => {
+  return parseInt(tags.find(t => t.length === 3 && t[0] === 'nonce')?.at(2) ?? '')
 }
 
 function notesReducer(state: NoteStore, arg: ReducerArg) {
@@ -40,6 +47,22 @@ function notesReducer(state: NoteStore, arg: ReducerArg) {
   if (!(evs instanceof Array)) {
     evs = evs === undefined ? [] : [evs];
   }
+ 
+  const minDifficulty = arg.minDifficulty ? arg.minDifficulty : 0
+  if (minDifficulty > 0) {
+    evs = evs.filter(e => {
+      const data = hexToBytes(e.id)
+      const eventDifficulty = extractDifficulty(e.tags)
+      if(isNaN(eventDifficulty)) {
+        return false
+      }
+      if(eventDifficulty < minDifficulty) {
+        return false
+      }
+      return checkDifficulty(data, eventDifficulty)
+    })
+  }
+
   const existingIds = new Set(state.notes.map(a => a.id));
   evs = evs.filter(a => !existingIds.has(a.id));
   if (evs.length === 0) {

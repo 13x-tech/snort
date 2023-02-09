@@ -118,7 +118,8 @@ export default class Event {
   }
 
   difficulty(): number {
-    return parseInt(this.Tags.find(t => t.Key === "nonce")?.Original[2]?? '0')
+    const difficulty = this.Tags.find(t => t.Key === "nonce")?.Original.at(2)
+    return parseInt(difficulty ?? '0')
   }
 
   ToObject(): RawEvent {
