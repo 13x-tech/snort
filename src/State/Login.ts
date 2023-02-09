@@ -60,6 +60,19 @@ export interface UserPreferences {
    * Use imgproxy to optimize images
    */
   imgProxyConfig: ImgProxySettings | null;
+
+  /**
+   * Engine to use for generating NIP13 IDs
+   * Javascript is slow and almost unusable
+   * Would like to benchmark and test a rust implementation.
+   * Likely a temporary option, may just turn to on/off
+   */
+  nip13Engine?: "wasm_go" | "javascript" 
+
+  /**
+   * Maximum timeout to wait for a proof of work NIP13 operation in seconds.
+   */
+  nip13Timeout: number
 }
 
 export type DbType = "indexdDb" | "redux";
@@ -183,6 +196,7 @@ export const InitState = {
     autoShowLatest: false,
     fileUploader: "void.cat",
     imgProxyConfig: DefaultImgProxy,
+    nip13Timeout: 35,
   },
 } as LoginStore;
 
