@@ -147,6 +147,8 @@
   "Pages.settings.LogOut": "ログアウト",
   "Pages.settings.Name": "名前",
   "Pages.settings.Nip05": "NIP-05",
+  "Pages.settings.Nip13": "",
+  "Pages.settings.Nip13Engine": "",
   "Pages.settings.None": "なし",
   "Pages.settings.Owner": "運営者",
   "Pages.settings.Preferences": "ユーザー設定",
@@ -164,5 +166,6 @@
   "Pages.settings.Supports": "対応",
   "Pages.settings.System": "システム（デフォルト）",
   "Pages.settings.Theme": "外観",
+  "Pages.settings.Timeout": "",
   "Pages.settings.Website": "ウェブサイト"
 }

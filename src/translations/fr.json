@@ -147,6 +147,8 @@
   "Pages.settings.LogOut": "Se Déconnecter",
   "Pages.settings.Name": "Nom",
   "Pages.settings.Nip05": "NIP-05",
+  "Pages.settings.Nip13": "",
+  "Pages.settings.Nip13Engine": "",
   "Pages.settings.None": "Aucun",
   "Pages.settings.Owner": "Propriétaire",
   "Pages.settings.Preferences": "Préférences",
@@ -164,5 +166,6 @@
   "Pages.settings.Supports": "Supporte",
   "Pages.settings.System": "Système (Défaut)",
   "Pages.settings.Theme": "Thème",
+  "Pages.settings.Timeout": "",
   "Pages.settings.Website": "Site Internet"
 }

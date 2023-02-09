@@ -147,6 +147,8 @@
   "Pages.settings.LogOut": "",
   "Pages.settings.Name": "",
   "Pages.settings.Nip05": "",
+  "Pages.settings.Nip13": "",
+  "Pages.settings.Nip13Engine": "",
   "Pages.settings.None": "",
   "Pages.settings.Owner": "",
   "Pages.settings.Preferences": "",
@@ -164,5 +166,6 @@
   "Pages.settings.Supports": "",
   "Pages.settings.System": "",
   "Pages.settings.Theme": "",
+  "Pages.settings.Timeout": "",
   "Pages.settings.Website": ""
 }

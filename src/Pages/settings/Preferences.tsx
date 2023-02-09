@@ -13,6 +13,7 @@ import "./Preferences.css";
 const PreferencesPage = () => {
   const dispatch = useDispatch();
   const perf = useSelector<RootState, UserPreferences>(s => s.login.preferences);
+  console.log('pref', perf.nip13Engine)
 
   return (
     <div className="preferences">
@@ -275,6 +276,60 @@ const PreferencesPage = () => {
             onChange={e => dispatch(setPreferences({ ...perf, showDebugMenus: e.target.checked }))}
           />
         </div>
+      </div>
+      <div className="card flex f-col">
+        <div className="flex w-max">
+          <div className="flex f-col f-grow">
+            <div>
+              <FormattedMessage {...messages.Nip13} />
+            </div>
+            <small>
+              <FormattedMessage {...messages.Nip13Engine} />
+            </small>
+          </div>
+          <div>
+          <select
+            value={perf.nip13Engine}
+            onChange={e =>
+              dispatch(
+                setPreferences({
+                  ...perf,
+                  nip13Engine: e.target.value,
+                } as UserPreferences)
+              )
+            }>
+            <option value="none">
+              <FormattedMessage {...messages.None} /> <FormattedMessage {...messages.Default} />
+            </option>
+            <option value="wasm_go">Wasm (Go)</option>
+            <option value="jasvascript">Javascript</option>
+          </select>
+          </div>
+        </div>
+        {perf.nip13Engine !== "none" && (
+          <div className="w-max mt10 form">
+            <div className="form-group">
+              <div>
+                <FormattedMessage {...messages.Timeout} />
+              </div>
+              <div className="w-max">
+                <input
+                  type="number"
+                  value={perf.nip13Timeout}
+                  placeholder="Timeout"
+                  onChange={e =>
+                    dispatch(
+                      setPreferences({
+                        ...perf,
+                        nip13Timeout: parseInt(e.target.value),
+                      })
+                    )
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

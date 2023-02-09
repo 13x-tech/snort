@@ -147,6 +147,8 @@
   "Pages.settings.LogOut": "Log Out",
   "Pages.settings.Name": "Name",
   "Pages.settings.Nip05": "NIP-05",
+  "Pages.settings.Nip13": "NIP-13 Proof of Work",
+  "Pages.settings.Nip13Engine": "Choose PoW Engine",
   "Pages.settings.None": "None",
   "Pages.settings.Owner": "Owner",
   "Pages.settings.Preferences": "Preferences",
@@ -164,5 +166,6 @@
   "Pages.settings.Supports": "Supports",
   "Pages.settings.System": "System (Default)",
   "Pages.settings.Theme": "Theme",
+  "Pages.settings.Timeout": "Timeout",
   "Pages.settings.Website": "Website"
 }

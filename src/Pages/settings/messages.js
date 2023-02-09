@@ -52,4 +52,7 @@ export default defineMessages({
   DisplayName: "Display name",
   Buy: "Buy",
   Nip05: "NIP-05",
+  Nip13: "NIP-13 Proof of Work",
+  Nip13Engine: "Choose PoW Engine",
+  Timeout: "Timeout",
 });
