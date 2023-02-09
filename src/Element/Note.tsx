@@ -17,6 +17,8 @@ import { TaggedRawEvent, u256 } from "Nostr";
 import useModeration from "Hooks/useModeration";
 
 import messages from "./messages";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPersonDigging } from "@fortawesome/free-solid-svg-icons";
 
 export interface NoteProps {
   data?: TaggedRawEvent;
@@ -99,6 +101,10 @@ export default function Note(props: NoteProps) {
     e.stopPropagation();
     navigate(eventLink(id));
   }
+
+  const difficulty = useMemo(() => {
+    return ev.difficulty();
+  }, [ev])
 
   function replyTag() {
     if (ev.Thread === null) {
@@ -191,11 +197,16 @@ export default function Note(props: NoteProps) {
         {options.showHeader && (
           <div className="header flex">
             <ProfileImage pubkey={ev.RootPubKey} subHeader={replyTag() ?? undefined} />
-            {options.showTime && (
-              <div className="info">
+            <div className="info">
+              {difficulty > 0 && (
+                <span className="difficulty">
+                  <FontAwesomeIcon icon={faPersonDigging} title={`Difficulty ${difficulty}`} />
+                </span>
+              )}
+              {options.showTime && (
                 <NoteTime from={ev.CreatedAt * 1000} />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
         <div className="body" onClick={e => goToEvent(e, ev.Id)}>

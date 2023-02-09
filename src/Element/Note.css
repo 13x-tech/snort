@@ -22,6 +22,10 @@
   color: var(--font-secondary-color);
 }
 
+.note > .header > .info > .difficulty {
+  margin-right: 4px;
+}
+
 .note > .body {
   margin-top: 4px;
   margin-bottom: 24px;

@@ -117,6 +117,10 @@ export default class Event {
     return hash;
   }
 
+  difficulty(): number {
+    return parseInt(this.Tags.find(t => t.Key === "nonce")?.Original[2]?? '0')
+  }
+
   ToObject(): RawEvent {
     return {
       id: this.Id,
