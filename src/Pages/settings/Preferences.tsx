@@ -13,7 +13,6 @@ import "./Preferences.css";
 const PreferencesPage = () => {
   const dispatch = useDispatch();
   const perf = useSelector<RootState, UserPreferences>(s => s.login.preferences);
-  console.log('pref', perf.nip13Engine)
 
   return (
     <div className="preferences">
@@ -315,6 +314,8 @@ const PreferencesPage = () => {
               <div className="w-max">
                 <input
                   type="number"
+                  min={1}
+                  max={480}
                   value={perf.nip13Timeout}
                   placeholder="Timeout"
                   onChange={e =>

@@ -35,9 +35,13 @@ function Icon({ pending, className, onCancel }: ItemProps) {
     return pending.statusMessage
   }, [pending])
 
+  const start = useMemo(() => {
+    return pending.start
+  },[pending])
+
   switch (pending.status) {
     case "pending":
-      return <CircleTimer onCancel={onCancel} start={pending.start} />
+      return <CircleTimer onCancel={onCancel} start={start} />
     case "success":
       return <span className={`success${className ? " " + className : ""}`}><FontAwesomeIcon icon={faCheck} /> {message}</span>
     default:
@@ -62,7 +66,7 @@ function Item({ pending, className }: ItemProps) {
       return ""
     }
     const noteContent = pending.info.event.content
-    return noteContent.length > 64 ? noteContent.slice(0, 63) + '...' : noteContent
+    return noteContent.length > 45 ? noteContent.slice(0, 42) + '...' : noteContent
   }, [pending.info])
 
   const onCancel = (ev: MouseEvent<HTMLButtonElement>) => {

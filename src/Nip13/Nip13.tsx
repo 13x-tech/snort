@@ -44,12 +44,12 @@ export function useNip13() {
         const parsedEvent: TaggedRawEvent = JSON.parse(e.data);
         const powEv = new Event(parsedEvent);
         const apply = async () => {
-          dispatch(setSuccess({ id: pendingId, message: "sent" }));
+          worker.terminate();
           await onComplete(powEv);
+          dispatch(setSuccess({ id: pendingId, message: "sent" }));
           setTimeout(() => {
             dispatch(deletePending(pendingId));
-          }, 1500);
-          worker.terminate();
+          }, 3500);
         };
         apply();
       };

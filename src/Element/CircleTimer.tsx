@@ -4,12 +4,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useMemo, useState } from "react"
 
 interface CircleTimerProps {
-  start?: number
+  start: number
   onCancel?: React.MouseEventHandler<HTMLButtonElement>
 }
 
-export default function CircleTimer({start: startTime, onCancel}: CircleTimerProps) {
-  const [start] = useState<number>(startTime ?? new Date().getTime());
+export default function CircleTimer({start, onCancel}: CircleTimerProps) {
   const [timeSince, setTimeSince] = useState<number>(0);
   const [mouseOver, setMouseOver] = useState<boolean>(false);
 

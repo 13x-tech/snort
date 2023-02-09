@@ -5,7 +5,22 @@
   color: var(--font-secondary-color);
 }
 
+.pending-note .error {
+  font-size: .8em;
+  border: 1px solid var(--gray-secondary);
+  background-color: var(--gray-tertiary);
+  padding: 3px 8px;
+  border-radius: 16px;
+}
+.pending-note .success {
+  font-size: .8em;
+  border: 1px solid var(--gray-secondary);
+  background-color: var(--gray-tertiary);
+  padding: 3px 8px;
+  border-radius: 16px;
+}
+
 .pending-content {
-  margin-left: 15px;
+  margin-left: 10px;
   margin-right: auto;
 }

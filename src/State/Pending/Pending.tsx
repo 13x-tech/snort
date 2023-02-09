@@ -50,7 +50,6 @@ const PendingSlice = createSlice({
       }
     },
     setSuccess(state, action: PayloadAction<{ id: string; message?: string }>) {
-      console.log("setting pending success", action.payload);
       const pending = state.pending.find(n => n.id === action.payload.id);
       if (pending) {
         const index = state.pending.indexOf(pending);
@@ -61,7 +60,6 @@ const PendingSlice = createSlice({
       }
     },
     setFailed(state, action: PayloadAction<{ id: string; message?: string }>) {
-      console.log("setting pending failed", action.payload);
       const pending = state.pending.find(n => n.id === action.payload.id);
       if (pending) {
         const index = state.pending.indexOf(pending);
