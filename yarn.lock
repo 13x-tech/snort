@@ -2076,6 +2076,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/golang-wasm@^1.15.0":
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/@types/golang-wasm/-/golang-wasm-1.15.0.tgz#3cb7e8c3d46e96719ca8a74602893c0a0744983a"
+  integrity sha512-1bPkr68p4OEm4/IxUgf7Bpw8XdGOQxh0M3B4DjkL3deRGN5Lr//J7fU651F7eoaaAjjeNgHjiINwqRzS1mvVHg==
+
 "@types/graceful-fs@^4.1.2":
   version "4.1.6"
   resolved "https://registry.yarnpkg.com/@types/graceful-fs/-/graceful-fs-4.1.6.tgz#e14b2576a1c25026b7f02ede1de3b84c3a1efeae"

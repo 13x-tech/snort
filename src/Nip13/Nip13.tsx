@@ -78,7 +78,7 @@ export function useNip13() {
 
 //TODO: build these.
 const _WASMPoW = (): Worker => {
-  return new Worker("/pow_worker.js");
+  return new Worker(new URL("./Workers/Nip13/Nip13.ts"));
 };
 
 const _JavascriptPoW = (): Worker => {
