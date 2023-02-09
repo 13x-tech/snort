@@ -4,14 +4,13 @@ import { UserPreferences } from "State/Login";
 import { RootState } from "State/Store";
 import { addPending, deletePending, setFailed, setSuccess } from "State/Pending/Pending";
 import { useDispatch, useSelector } from "react-redux";
-import { useMemo } from "react";
 
 export function useNip13() {
   const pref = useSelector<RootState, UserPreferences>(s => s.login.preferences);
   const dispatch = useDispatch();
 
-  const worker = useMemo(() => {
-    switch (pref.nip13Engine) {
+  const useWorker = () => {
+    switch(pref.nip13Engine) {
       case "wasm_go":
         return _WASMPoW();
       case "javascript":
@@ -19,10 +18,11 @@ export function useNip13() {
       default:
         return
     }
-  }, [pref.nip13Engine]);
+  }
 
   return {
     pow: async (difficulty: number, ev: Event, onComplete: (ev: Event) => Promise<void>) => {
+      const worker =  useWorker();
       if(!worker) {
         throw Error('worker not defined in preferences')
       }

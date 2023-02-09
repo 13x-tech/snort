@@ -16,6 +16,7 @@ import ProfilePreview from "./ProfilePreview";
 import Skeleton from "Element/Skeleton";
 
 import messages from "./messages";
+import Pending from "./Pending";
 
 export interface TimelineProps {
   postsOnly: boolean;
@@ -81,6 +82,7 @@ export default function Timeline({
 
   return (
     <div className="main-content">
+      <Pending />
       {latestFeed.length > 1 && (
         <div className="card latest-notes pointer" onClick={() => showLatest()}>
           <FontAwesomeIcon icon={faForward} size="xl" />{" "}

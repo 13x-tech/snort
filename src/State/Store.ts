@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { reducer as LoginReducer } from "State/Login";
 import { reducer as UsersReducer } from "State/Users";
+import { reducer as PendingReducer } from "State/Pending/Pending";
 
 const store = configureStore({
   reducer: {
     login: LoginReducer,
     users: UsersReducer,
+    pending: PendingReducer,
   },
 });
 

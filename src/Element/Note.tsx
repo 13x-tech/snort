@@ -200,7 +200,7 @@ export default function Note(props: NoteProps) {
             <div className="info">
               {difficulty > 0 && (
                 <span className="difficulty">
-                  <FontAwesomeIcon icon={faPersonDigging} title={`Difficulty ${difficulty}`} />
+                  <FontAwesomeIcon icon={faPersonDigging} title={`Difficulty ${difficulty}`} size="xs" />
                 </span>
               )}
               {options.showTime && (

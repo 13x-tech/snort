@@ -1,4 +1,4 @@
-importScripts('./wasm_exec.js');
+import './wasm_exec.js';
 declare function WASM_GO_GeneratePoW(inpuut: string): Promise<string>;
 console.log('Initializing PoW Worker')
 
@@ -9,7 +9,7 @@ self.onmessage = (e: MessageEvent<string>) => {
 }
 
 const go = new Go();
-WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then(results => {
+WebAssembly.instantiateStreaming(fetch("/main.wasm"), go.importObject).then(results => {
   go.run(results.instance);
 
   const getPow = async (e: MessageEvent<string>) => {

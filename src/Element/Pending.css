@@ -1,0 +1,11 @@
+
+.pending-note>.info {
+  font-size: var(--font-size);
+  white-space: nowrap;
+  color: var(--font-secondary-color);
+}
+
+.pending-content {
+  margin-left: 15px;
+  margin-right: auto;
+}
