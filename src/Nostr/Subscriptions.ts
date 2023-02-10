@@ -92,6 +92,11 @@ export class Subscriptions {
    */
   Finished: Map<string, number>;
 
+  /**
+   * Minimum Target difficulty for this sub
+   */
+  TargetDifficulty?: number;
+
   constructor(sub?: RawReqFilter) {
     this.Id = uuid();
     this.Ids = sub?.ids ? new Set(sub.ids) : undefined;

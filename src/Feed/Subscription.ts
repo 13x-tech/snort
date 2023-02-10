@@ -5,7 +5,7 @@ import { Subscriptions } from "Nostr/Subscriptions";
 import { debounce, unwrap } from "Util";
 import { db } from "Db";
 import { hexToBytes } from "@noble/hashes/utils";
-import { checkDifficulty } from "Nip13/Nip13";
+import { checkDifficulty, extractDifficulty } from "Nip13/Nip13";
 
 export type NoteStore = {
   notes: Array<TaggedRawEvent>;
@@ -22,10 +22,6 @@ interface ReducerArg {
   ev?: TaggedRawEvent | TaggedRawEvent[];
   end?: boolean;
   minDifficulty?: number;
-}
-
-const extractDifficulty = (tags: string[][]): number => {
-  return parseInt(tags.find(t => t.length === 3 && t[0] === 'nonce')?.at(2) ?? '')
 }
 
 function notesReducer(state: NoteStore, arg: ReducerArg) {
@@ -126,6 +122,7 @@ export default function useSubscription(
             dispatch({
               type: "EVENT",
               ev: ev,
+              minDifficulty: sub?.TargetDifficulty,
             });
           })
           .catch(console.warn);
@@ -134,6 +131,7 @@ export default function useSubscription(
         dispatch({
           type: "EVENT",
           ev: e,
+          minDifficulty: sub?.TargetDifficulty,
         });
         if (useCache) {
           db.events.put(e);
@@ -186,6 +184,7 @@ export default function useSubscription(
       dispatch({
         type: "EVENT",
         ev: n,
+        minDifficulty: sub?.TargetDifficulty,
       });
     },
   };

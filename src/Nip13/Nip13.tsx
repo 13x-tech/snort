@@ -5,6 +5,10 @@ import { RootState } from "State/Store";
 import { addPending, deletePending, setFailed, setSuccess } from "State/Pending/Pending";
 import { useDispatch, useSelector } from "react-redux";
 
+export const extractDifficulty = (tags: string[][]): number => {
+  return parseInt(tags.find(t => t.length === 3 && t[0] === 'nonce')?.at(2) ?? '')
+}
+
 export function useNip13() {
   const pref = useSelector<RootState, UserPreferences>(s => s.login.preferences);
   const dispatch = useDispatch();

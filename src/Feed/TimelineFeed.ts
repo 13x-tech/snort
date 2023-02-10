@@ -17,6 +17,16 @@ export interface TimelineSubject {
   type: "pubkey" | "hashtag" | "global" | "ptag" | "keyword";
   discriminator: string;
   items: string[];
+  minDifficulty?: number;
+}
+
+const minDifficultyHex = (difficulty: number): string => {
+  const target = Math.ceil(difficulty / 4)
+  let s = '';
+  for(let i = 0; i < target; i++) {
+      s += '0'
+  }
+  return s;
 }
 
 export default function useTimelineFeed(subject: TimelineSubject, options: TimelineFeedOptions) {
@@ -36,6 +46,10 @@ export default function useTimelineFeed(subject: TimelineSubject, options: Timel
     const sub = new Subscriptions();
     sub.Id = `timeline:${subject.type}:${subject.discriminator}`;
     sub.Kinds = new Set([EventKind.TextNote, EventKind.Repost]);
+    if(subject.minDifficulty) {
+      sub.Ids ? sub.Ids.add(minDifficultyHex(subject.minDifficulty)) : sub.Ids = new Set([minDifficultyHex(subject.minDifficulty)])
+      sub.TargetDifficulty = subject.minDifficulty
+    }
     switch (subject.type) {
       case "pubkey": {
         sub.Authors = new Set(subject.items);

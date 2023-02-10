@@ -17,6 +17,7 @@ import Skeleton from "Element/Skeleton";
 
 import messages from "./messages";
 import Pending from "./Pending";
+import { extractDifficulty } from "Nip13/Nip13";
 
 export interface TimelineProps {
   postsOnly: boolean;
@@ -42,14 +43,25 @@ export default function Timeline({
     window: window,
   });
 
+
+  const checkDifficulty = (ev: TaggedRawEvent, minDifficulty?: number): boolean => {
+    if(!minDifficulty || minDifficulty <= 0) {
+      return true
+    }
+
+    return extractDifficulty(ev.tags) >= minDifficulty
+  }
+
   const filterPosts = useCallback(
     (nts: TaggedRawEvent[]) => {
       return [...nts]
         .sort((a, b) => b.created_at - a.created_at)
+        ?.filter(a => checkDifficulty(a, subject.minDifficulty))
         ?.filter(a => (postsOnly ? !a.tags.some(b => b[0] === "e") : true))
-        .filter(a => ignoreModeration || !isMuted(a.pubkey));
+        .filter(a => ignoreModeration || !isMuted(a.pubkey))
+        ;
     },
-    [postsOnly, muted]
+    [postsOnly, muted, subject]
   );
 
   const mainFeed = useMemo(() => {

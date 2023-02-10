@@ -67,12 +67,17 @@ export interface UserPreferences {
    * Would like to benchmark and test a rust implementation.
    * Likely a temporary option, may just turn to on/off
    */
-  nip13Engine: "wasm_go" | "javascript" | "none"
+  nip13Engine: "wasm_go" | "javascript" | "none";
 
   /**
    * Maximum timeout to wait for a proof of work NIP13 operation in seconds.
    */
-  nip13Timeout: number
+  nip13Timeout: number;
+
+  /**
+   * Target difficulty default for Global feed
+   */
+  nip13TargetDifficulty: number;
 }
 
 export type DbType = "indexdDb" | "redux";
@@ -198,6 +203,7 @@ export const InitState = {
     imgProxyConfig: DefaultImgProxy,
     nip13Engine: "none",
     nip13Timeout: 35,
+    nip13TargetDifficulty: 0,
   },
 } as LoginStore;
 

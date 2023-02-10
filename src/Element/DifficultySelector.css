@@ -1,0 +1,7 @@
+.difficulty-selector svg + select {
+  padding-left: 30px;
+}
+
+span.difficulty-selector svg {
+  margin-right: -30px;
+}
